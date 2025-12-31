@@ -1,0 +1,50 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-c",
+      "-o",
+      "function_plotter.o",
+      "function_plotter.c"
+    ],
+    "directory": "/home/martin/Escritorio/Proyectos_C/function_plotter",
+    "file": "/home/martin/Escritorio/Proyectos_C/function_plotter/function_plotter.c",
+    "output": "/home/martin/Escritorio/Proyectos_C/function_plotter/function_plotter.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-I/usr/include/SDL2",
+      "-D_GNU_SOURCE=1",
+      "-D_REENTRANT",
+      "-o",
+      "programa",
+      "function_plotter.c"
+    ],
+    "directory": "/home/martin/Escritorio/Proyectos_C/function_plotter",
+    "file": "/home/martin/Escritorio/Proyectos_C/function_plotter/function_plotter.c",
+    "output": "/home/martin/Escritorio/Proyectos_C/function_plotter/programa"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-I/usr/include/SDL2",
+      "-D_GNU_SOURCE=1",
+      "-D_REENTRANT",
+      "-o",
+      "programa",
+      "lib/tinyexpr.c"
+    ],
+    "directory": "/home/martin/Escritorio/Proyectos_C/function_plotter",
+    "file": "/home/martin/Escritorio/Proyectos_C/function_plotter/lib/tinyexpr.c",
+    "output": "/home/martin/Escritorio/Proyectos_C/function_plotter/programa"
+  }
+]
