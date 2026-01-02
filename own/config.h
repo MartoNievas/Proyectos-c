@@ -8,6 +8,11 @@
 static const double default_zoom = 0.75;
 static char *font = "JetBrainsMono Nerd Font 20";
 
+static const GdkRGBA bg = {1.0,1.0,1.0,1.0};
+static const GdkRGBA fg = {0.0,0.0,0.0,0.0};
+
+
+
 static Key keys[] = {
     { GDK_KEY_C, MOD_TERM | GDK_SHIFT_MASK, copy_clipboard },
     { GDK_KEY_V, MOD_TERM | GDK_SHIFT_MASK, paste_clipboard },

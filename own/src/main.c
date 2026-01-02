@@ -21,7 +21,8 @@ int main(int argc, char* argv[])
   //Terminal 
   VteTerminal* term = terminal_new();
   terminal_spawn(term);
-
+  terminal_set_font(term);
+  terminal_set_colors(term);
   //keybindings
   
    g_signal_connect(

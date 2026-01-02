@@ -26,6 +26,13 @@ void terminal_spawn(VteTerminal* term)
     -1,
     NULL,NULL,NULL
   );
+  
+  vte_terminal_set_audible_bell(term, FALSE);
+    
+}
+
+void terminal_set_font(VteTerminal* term) 
+{
   /* Seteo de fuente */
   PangoFontDescription* font_desc;
   font_desc = pango_font_description_from_string(font);
@@ -39,5 +46,17 @@ void terminal_spawn(VteTerminal* term)
   vte_terminal_set_font_scale(term, 0.75);
   vte_terminal_set_cell_width_scale(term, 1.0);
   vte_terminal_set_cell_height_scale(term, 1.0);
+}
 
+void terminal_set_colors(VteTerminal* term)
+{
+  GdkRGBA bg = {1.0,1.0,1.0,1.0};
+  GdkRGBA fg = {0.0,0.0,0.0,0.0};
+  vte_terminal_set_colors(
+    term,
+    &bg,
+    &fg,
+    NULL,
+    0
+  );
 }
