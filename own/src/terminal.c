@@ -1,0 +1,35 @@
+#include "terminal.h"
+#include "../config.h"
+VteTerminal* terminal_new(void)
+{
+  VteTerminal* term = VTE_TERMINAL(vte_terminal_new());
+  vte_terminal_set_enable_legacy_osc777(term,TRUE);
+  
+  return term;
+}
+
+void terminal_spawn(VteTerminal* term)
+{
+  const char* shell = g_getenv("SHELL");
+  if (!shell) shell = "/bin/bash";
+  
+  char* argv[] = {(char*) shell, NULL};
+
+  vte_terminal_spawn_async(
+    term,
+    VTE_PTY_DEFAULT,
+    NULL,
+    argv,
+    NULL,
+    G_SPAWN_DEFAULT,
+    NULL,NULL,NULL,
+    -1,
+    NULL,NULL,NULL
+  );
+  PangoFontDescription* font_desc;
+  font_desc = pango_font_description_from_string(font);
+
+  vte_terminal_set_font(term,font_desc);
+
+  pango_font_description_free(font_desc);
+}
