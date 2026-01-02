@@ -3,6 +3,10 @@
 
 #include <gtk/gtk.h>
 #include <vte/vte.h>
+#define ZOOM_FACTOR 1.1
+#define MIN_ZOOM 0.5
+#define MAX_ZOOM 3
+#define DEF_ZOOM 0.75
 
 typedef struct {
     guint key;
@@ -18,5 +22,8 @@ gboolean handle_keys_press(GtkWidget *widget,
 /* acciones */
 void copy_clipboard(VteTerminal *term);
 void paste_clipboard(VteTerminal *term);
-
+void zoom_in(VteTerminal* term);
+void zoom_out(VteTerminal* term);
+void reset_zoom(VteTerminal* term);
+void apply_zoom(VteTerminal* term);
 #endif /* KEYS_H */

@@ -26,10 +26,18 @@ void terminal_spawn(VteTerminal* term)
     -1,
     NULL,NULL,NULL
   );
+  /* Seteo de fuente */
   PangoFontDescription* font_desc;
   font_desc = pango_font_description_from_string(font);
 
   vte_terminal_set_font(term,font_desc);
 
   pango_font_description_free(font_desc);
+
+  /* Seteto de escala*/
+
+  vte_terminal_set_font_scale(term, 0.75);
+  vte_terminal_set_cell_width_scale(term, 1.0);
+  vte_terminal_set_cell_height_scale(term, 1.0);
+
 }
