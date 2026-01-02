@@ -1,5 +1,5 @@
 #include "terminal.h"
-#include "../config.h"
+#include "../config/config.h"
 VteTerminal* terminal_new(void)
 {
   VteTerminal* term = VTE_TERMINAL(vte_terminal_new());
@@ -50,9 +50,7 @@ void terminal_set_font(VteTerminal* term)
 
 void terminal_set_colors(VteTerminal* term)
 {
-  GdkRGBA bg = {1.0,1.0,1.0,1.0};
-  GdkRGBA fg = {0.0,0.0,0.0,0.0};
-  vte_terminal_set_colors(
+    vte_terminal_set_colors(
     term,
     &bg,
     &fg,

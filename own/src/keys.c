@@ -1,5 +1,5 @@
 #include "keys.h"
-#include "../config.h"
+#include "../config/config.h"
 static double zoom = 0.75;
 gboolean handle_keys_press(GtkWidget* widget,
                            GdkEventKey* event,
@@ -9,7 +9,7 @@ gboolean handle_keys_press(GtkWidget* widget,
   VteTerminal* term = VTE_TERMINAL(widget);
 
   unsigned int i;
-  for (i = 0;i < G_N_ELEMENTS(keys);i++) {
+  for (i = 0;i < keys_len;i++) {
       if(event->keyval == keys[i].key &&
          (event->state & keys[i].mod) == keys[i].mod)
     {
