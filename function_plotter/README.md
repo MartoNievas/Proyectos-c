@@ -12,8 +12,8 @@ Este proyecto es acerca de un aplicacion para renderizar el grafico de una funci
 
 Se requiere tener instaladas las siguiente librerias para el uso y compilacion del proyecto.
 
-- SDL2 (Depencia)
-- SDL2_ttf (Depencia)
+- SDL2 (Dependencia)
+- SDL2_ttf (Dependencia)
 
 Con el siguiente comando se puede descargar en arch-linux:
 ```bash
