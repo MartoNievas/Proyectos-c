@@ -16,7 +16,8 @@ El objetivo de este repo es mantener un seguimiento de mis proyectos en el lengu
 
 ### Terminal Own
 
-- Terminal basada en st de suckless, es un terminal sencilla que cuenta con funcionalidades bases.
+- Terminal basada en st de suckless, es un terminal sencilla que cuenta con funcionalidades bases, utilizando las librerias gtk3 y
+VTE terminal.
 
 ### Battery-Notifications
 
