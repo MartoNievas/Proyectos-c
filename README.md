@@ -15,3 +15,11 @@ El objetivo de este repo es mantener un seguimiento de mis proyectos en el lengu
 ### Timer 
 
 ### Terminal Own
+
+- Terminal basada en st de suckless, es un termina sencilla que cuenta con funcionalidades bases.
+
+### Battery-Warnings
+
+- Sistema de noficaciones del estado de la bateria actual
+
+
