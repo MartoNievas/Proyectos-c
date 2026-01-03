@@ -16,9 +16,9 @@ El objetivo de este repo es mantener un seguimiento de mis proyectos en el lengu
 
 ### Terminal Own
 
-- Terminal basada en st de suckless, es un termina sencilla que cuenta con funcionalidades bases.
+- Terminal basada en st de suckless, es un terminal sencilla que cuenta con funcionalidades bases.
 
-### Battery-Warnings
+### Battery-Notifications
 
 - Sistema de noficaciones del estado de la bateria actual
 
