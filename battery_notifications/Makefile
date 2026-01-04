@@ -20,7 +20,18 @@ install: all
 	cp -f lowbattery $(DESTDIR)$(PREFIX)/bin
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/lowbattery
 service:
-	cp -f lowbattery.service /usr/lib/systemd/system/lowbattery.service
+	cp -f lowbattery.service ~/.config/systemd/user/lowbattery.service
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/lowbattery
-	rm -f /etc/systemd/system/lowbattery.service
+	rm -f ~/.config/systemd/user/lowbattery.service
+
+enable: 
+	systemctl --user daemon-reload
+	systemctl --user enable lowbattery.service
+
+start:
+	systemctl --user restart lowbattery.service
+
+disable:
+	systemctl --user stop lowbattery.service
+	systemctl --user disable lowbattery.service
