@@ -87,8 +87,11 @@ int main()
     
                 notification = notify_notification_new("Battery Low", "Connect charger", NULL);
                 notify_notification_set_urgency(notification, NOTIFY_URGENCY_CRITICAL);
+                notify_notification_show(notification,NULL);
+                g_object_unref(notification);
  
-            } else if (cap > LOW_BATTERY_WARNING_THRESHOLD && (flag & F_CHG)) {
+            } 
+            if ( (flag & F_CHG)) {
                 flag &= ~F_CHG; // set to flag not charge
                 notification = notify_notification_new("Discharging", "Charger disconnect",NULL); 
             }    
