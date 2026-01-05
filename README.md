@@ -23,4 +23,6 @@ VTE terminal.
 
 - Sistema de noficaciones del estado de la bateria actual
 
+### Keyboard-Tester
 
+- Aplicacion para testear un teclado, con la distribucion de una thinkpad T480
