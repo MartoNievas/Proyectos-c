@@ -19,10 +19,10 @@ El objetivo de este repo es mantener un seguimiento de mis proyectos en el lengu
 - Terminal basada en st de suckless, es un terminal sencilla que cuenta con funcionalidades bases, utilizando las librerias gtk3 y
 VTE terminal.
 
-### Battery-Notifications
+### Battery Notifications
 
 - Sistema de noficaciones del estado de la bateria actual
 
-### Keyboard-Tester
+### Keyboard Tester
 
 - Aplicacion para testear un teclado, con la distribucion de una thinkpad T480
