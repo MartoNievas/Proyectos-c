@@ -8,6 +8,8 @@
 #define F_LOW 1
 #define F_CHG 2
 #define F_FULL 4
+#define F_FULL_CHG 8
+
 char* readfile(char* base, char* file)
 {
     char path[512];
@@ -93,32 +95,51 @@ int main()
             } 
             if ( (flag & F_CHG)) {
                 flag &= ~F_CHG; // set to flag not charge
-                notification = notify_notification_new("Discharging", "Charger disconnect",NULL); 
+                notification = notify_notification_new("Discharging", "Charger disconnect",NULL);
+                notify_notification_show(notification,NULL);
+                g_object_unref(notification);
             }    
         } 
         else if(!strncmp(cp, "Charging", 8))
-        {
+        {   
+            //Cambiamos la flag de lo ya que esta cargando
             if((flag & F_LOW))
             {
                 flag &= ~F_LOW;
             }
-            if (cap < 100 && (flag & F_FULL)) {
+            //Si la bateria no esta full cabiamos ambas flags de full
+            if (cap < 100 ) {
               flag &= ~F_FULL;
             }
+            //Seteamos full battry + cargando 
+            if (cap == 100 && (flag & F_FULL_CHG) && !(flag & F_CHG)) {
+              flag &= ~F_FULL_CHG;
+            }
+            //Notificacion de cargador conectado 
             if ((flag & F_CHG) == 0) {
                 flag |= F_CHG; //Set flag charge 
                 notification = notify_notification_new("Charging", "Charger connect",NULL); 
+                notify_notification_show(notification,NULL);
+                g_object_unref(notification);
             }
-            if (cap == 100 && (flag & F_FULL) == 0) {
+            //Notificacion de bateria full
+            if (cap == 100 && ((flag & F_FULL) == 0)) {
                 flag |= F_FULL;
                 notification = notify_notification_new("Battery full", "Disconnect charger",NULL);
+                notify_notification_show(notification,NULL);
+                g_object_unref(notification);
+            }
+            // Notificación batería full + cargador conectado
+            if(cap == 100 && (flag & F_CHG) && ((flag & F_FULL_CHG) == 0)) {
+                flag |= F_FULL_CHG;
+                notification = notify_notification_new("Battery full", "Charger still connected", NULL);
+                notify_notification_show(notification,NULL);
+                g_object_unref(notification);
             }
 
         } 
-        if (notification)
         {   
-            notify_notification_show(notification,NULL);
-            g_object_unref(notification);
+           
 				    notification = NULL;
         }
         free(cp);
@@ -128,3 +149,4 @@ int main()
 
     return 0;
 }
+
