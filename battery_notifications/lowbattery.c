@@ -11,7 +11,6 @@
 #define F_LOW 1
 #define F_CHG 2
 #define F_FULL 4
-#define F_FULL_CHG 8
 
 char* readfile(char* base, char* file)
 {
@@ -93,7 +92,7 @@ int main()
 
             if (flag & F_CHG) {
                 flag &= ~F_CHG;
-                flag &= ~F_FULL_CHG;
+                flag &= ~F_FULL;
                 NotifyNotification* notify =
                     notify_notification_new("Discharging", "Charger disconnect", NULL);
                 notify_notification_show(notify, NULL);
@@ -109,23 +108,17 @@ int main()
 
             if (!(flag & F_CHG)) {
                 flag |= F_CHG;
-                flag &= ~F_FULL_CHG;
+                flag &= ~F_FULL;
                 NotifyNotification* notify =
                     notify_notification_new("Charging", "Charger connect", NULL);
                 notify_notification_show(notify, NULL);
                 g_object_unref(notify);
             }
 
-            if (cap == 100 && !(flag & F_FULL)) {
-                flag |= F_FULL;
-                NotifyNotification* notify =
-                    notify_notification_new("Battery full", "Disconnect charger", NULL);
-                notify_notification_show(notify, NULL);
-                g_object_unref(notify);
-            }
+            
 
-            if (cap == 100 && (flag & F_CHG) && !(flag & F_FULL_CHG)) {
-                flag |= F_FULL_CHG;
+            if (cap == 100 && (flag & F_CHG) && !(flag & F_FULL)) {
+                flag |= F_FULL;
                 NotifyNotification* notify =
                     notify_notification_new("Battery full", "Charger still connected", NULL);
                 notify_notification_show(notify, NULL);

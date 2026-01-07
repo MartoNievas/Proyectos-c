@@ -193,7 +193,6 @@ char* key_code_to_string(int key_code)
     case KEY_END: return " End";
     case KEY_INSERT: return " Ins";
     case KEY_DELETE: return " Del";
-    case KEY_GRAVE: return " ~";
     case KEY_BACKSPACE: return " Back";
     case KEY_TAB: return " Tab";
     case KEY_ENTER: return " Enter";
