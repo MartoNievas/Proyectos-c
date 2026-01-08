@@ -32,3 +32,7 @@ VTE terminal.
 ### Benchmark Disk
 
 - Herramienta para tester velocidad de lectura y escritura de un disco en particular
+
+### Mouse Tracker
+
+- Herramienta para testear mouse o touchpad
