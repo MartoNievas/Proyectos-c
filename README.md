@@ -28,3 +28,7 @@ VTE terminal.
 ### Keyboard Tester
 
 - Aplicacion para testear un teclado, con la distribucion de una thinkpad T480
+
+### Benchmark Disk
+
+- Herramienta para tester velocidad de lectura y escritura de un disco en particular

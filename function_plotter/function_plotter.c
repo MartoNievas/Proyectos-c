@@ -111,8 +111,8 @@ void draw_function(SDL_Surface *psurface, SDL_Window *pwindow, te_expr *pexpr,
                    double *x_var) {
   double y, x;
   double step = 0.00001;
-  double x_scale = WIDTH / (X_END - X_START);
-  double y_scale = HEIGHT / (Y_END - Y_START);
+  double x_scale = (double)WIDTH / (double)(X_END - X_START);
+  double y_scale = (double)HEIGHT / (double)(Y_END - Y_START);
   Uint32 color = SDL_MapRGB(psurface->format, 0, 255, 255);
   SDL_Rect pixel = {0, 0, 2, 2};
 
