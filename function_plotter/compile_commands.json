@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "/home/martin/proyecto",
+    "command": "gcc main.c -I/usr/include/SDL2 -D_REENTRANT",
+    "file": "main.c"
+  }
+]
