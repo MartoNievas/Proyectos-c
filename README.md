@@ -14,7 +14,7 @@ El objetivo de este repo es mantener un seguimiento de mis proyectos en el lengu
 
 ### Timer 
 
-Contador hecho con syscalls del kernel setitimer y sigactions
+- Contador hecho con syscalls del kernel setitimer y sigactions
 
 ### Terminal Own
 
@@ -36,3 +36,7 @@ VTE terminal.
 ### Mouse Tracker
 
 - Herramienta para testear mouse o touchpad
+
+### Paint
+  
+- Imitacion de la conocida herramienta de dibujo Paint.
