@@ -40,3 +40,11 @@ VTE terminal.
 ### Paint
   
 - Imitacion de la conocida herramienta de dibujo Paint.
+
+### Spring On Mass Simulation
+
+- Simulacion de un resorte con friccion
+
+### Particles Collision
+
+- Simulacion de colision de particulas con mas

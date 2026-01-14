@@ -14,7 +14,7 @@
 /*Defines use for SLD window */
 #define WIDTH 900
 #define HIGHT 600
-#define BG_COLOR 0x00000000
+#define BG_COLOR 0xffffffff
 #define TARGET_FPS 120
 
 /*Defines use to for aux funct*/
