@@ -47,4 +47,9 @@ VTE terminal.
 
 ### Particles Collision
 
-- Simulacion de colision de particulas con mas
+- Simulacion de colision de particulas con masa
+
+### Leaf Venation
+
+- Este proyecto implementa un algoritmo de colonización de espacio basado en el paper: 
+> [Modeling and visualization of leaf venation patterns (Runions et al.)](https://algorithmicbotany.org/papers/venation.sig2005.pdf)
