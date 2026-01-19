@@ -2,6 +2,7 @@
 #define AES_H
 
 /*Defines aes errors*/
+#include <stdint.h>
 typedef enum {
   AES_SUCCES = 0,
   AES_ERROR_UNSUPORTED_KEY,
@@ -9,21 +10,39 @@ typedef enum {
 } aes_error_t;
 
 /*Size of keys of keys in bytes */
+
 typedef enum {
   AES_KEY_128 = 16,
   AES_KEY_192 = 24,
   AES_KEY_256 = 32,
 } aes_key_size_t;
 
-#define AES_ROUNDS_128 10
-#define AES_ROUND_192 12
-#define AES_ROUNDS_256 14
+typedef enum {
+  AES_WORD_128 = 4,
+  AES_WORD_192 = 6,
+  AES_WORD_256 = 8,
+} aes_words_t;
 
-#define AES_MATRIX_SIZE 4
+/*Needed parameters for aes algorithm*/
 
-#define AEX_BLOCK_SIZE 16
+typedef struct {
+  aes_words_t keys;
+  int rounds;
+} aes_params_t;
 
-#define WORD_SIZE 4
-#define BITS_PER_BYTE 8
+#define AES_MAX_WORDS 60
 
+typedef struct {
+  uint8_t w[AES_MAX_WORDS][4];
+  int Nk;
+} rounds_keys_t;
+
+#define STATE_MATRIX_SIZE 4
+
+typedef uint8_t aes_matrix_state_t[STATE_MATRIX_SIZE][STATE_MATRIX_SIZE];
+typedef uint8_t aes_round_key_t[STATE_MATRIX_SIZE][STATE_MATRIX_SIZE];
+
+/*Public API*/
+
+aes_error_t aes_encrypt();
 #endif // !AES_DEF
