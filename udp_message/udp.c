@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
                         (struct sockaddr *)&server_addr, sizeof(server_addr));
 
       if (sent < 0) {
-        perror("ERROR in sendto");
+        perror("ERROR in sendto\n");
       } else {
         printf("Sent %d bytes\n", sent);
       }
