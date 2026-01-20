@@ -1,94 +1,124 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
 
-/*Defines data*/
-#define PORT (9999)
-#define MAXLINE 1000
-#define MARTIN_IP "192.168.1.198"
-#define MOMI_IP "192.168.1.151"
-#define MARCE_IP "0"
-typedef enum {
-  MARTIN,
-  MOMI,
-  MARCE,
-} Devices_Kind;
+#define BUF_SIZE 256
 
-typedef struct {
-  Devices_Kind kind;
-  const char *ip;
-} Device;
-
-const char *string_to_ip(const char *device) {
-  if (!device) {
-    printf("ERROR: Null pointer in string\n");
-    return NULL;
-  }
-  if (strcmp(device, "martin") == 0) {
-    return MARTIN_IP;
-  } else if (strcmp(device, "momi") == 0) {
-    return MOMI_IP;
-  } else if (strcmp(device, "marce") == 0) {
-    return MARCE_IP;
-  }
-  return NULL;
-}
-
-char buffer[100];
-char message[256];
 int main(int argc, char *argv[]) {
 
-  printf("Welcome to the UDP message sender\n");
-  if (argc != 2) {
-    printf("Usage: %s <device or ip>\n", argv[0]);
-    return 0;
+  bool listen_mode = false;
+  int port = 0;
+
+  if (argc == 3 && strcmp(argv[1], "-l") == 0) {
+    listen_mode = true;
+    port = atoi(argv[2]);
+  } else if (argc == 5 && strcmp(argv[1], "-d") == 0 &&
+             strcmp(argv[3], "-p") == 0) {
+    port = atoi(argv[4]);
+  } else {
+    printf("Usage:\n");
+    printf("  %s -l <port>\n", argv[0]);
+    printf("  %s -d <device|ip> -p <port>\n", argv[0]);
+    return 1;
   }
 
-  const char *device = argv[1];
-  const char *ip = string_to_ip(device);
-
-  int sockfd;
-
-  struct sockaddr_in servaddr;
-
-  // clear servaddr
-  bzero(&servaddr, sizeof(servaddr));
-
-  if (!ip) {
-    ip = device;
-  }
-  servaddr.sin_port = htons(PORT);
-  servaddr.sin_addr.s_addr = inet_addr(ip);
-  servaddr.sin_family = AF_INET;
-
-  sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-
-  // connect server
-  if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
-    printf("ERROR: Connect failed \n");
-    exit(0);
+  int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (sockfd < 0) {
+    perror("socket");
+    return 1;
   }
 
-  for (;;) {
-    printf("Send a message: \n");
-    fflush(stdout);
-    if (!fgets(message, sizeof(message), stdin))
-      break;
+  /* ================= LISTEN MODE ================= */
+  if (listen_mode) {
+    struct sockaddr_in local_addr;
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+    char buffer[BUF_SIZE];
 
-    const char *source = message;
-    sendto(sockfd, source, strlen(source), 0, (struct sockaddr *)NULL,
-           sizeof(servaddr));
+    bzero(&local_addr, sizeof(local_addr));
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_addr.s_addr = INADDR_ANY;
+    local_addr.sin_port = htons(port);
+
+    if (bind(sockfd, (struct sockaddr *)&local_addr, sizeof(local_addr)) < 0) {
+      perror("bind");
+      close(sockfd);
+      return 1;
+    }
+
+    printf("Listening on port %d...\n", port);
+
+    for (;;) {
+      int n = recvfrom(sockfd, buffer, BUF_SIZE - 1, 0,
+                       (struct sockaddr *)&client_addr, &client_len);
+
+      if (n < 0) {
+        perror("recvfrom");
+        continue;
+      } else if (n == 0) {
+        continue;
+      }
+
+      buffer[n] = '\0';
+
+      if (buffer[n - 1] == '\n') {
+        buffer[n - 1] = '\0';
+      }
+
+      printf("From %s:%d -> %s\n", inet_ntoa(client_addr.sin_addr),
+             ntohs(client_addr.sin_port), buffer);
+    }
   }
 
-  recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)NULL, NULL);
-  puts(buffer);
+  /* ================= SEND MODE ================= */
+  else {
+    const char *ip = argv[2];
+    char message[BUF_SIZE];
+
+    struct sockaddr_in server_addr;
+    bzero(&server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+
+    if (inet_aton(ip, &server_addr.sin_addr) == 0) {
+      printf("Invalid IP address\n");
+      close(sockfd);
+      return 1;
+    }
+
+    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) <
+        0) {
+      perror("connect");
+      close(sockfd);
+      return 1;
+    }
+
+    printf("Sending to %s:%d\n", ip, port);
+
+    while (true) {
+      printf("Message: ");
+      fflush(stdout);
+
+      if (!fgets(message, sizeof(message), stdin))
+        break;
+
+      int sent = sendto(sockfd, message, strlen(message), 0,
+                        (struct sockaddr *)&server_addr, sizeof(server_addr));
+
+      if (sent < 0) {
+        perror("ERROR in sendto");
+      } else {
+        printf("Sent %d bytes\n", sent);
+      }
+    }
+  }
+
   close(sockfd);
-
   return 0;
 }
