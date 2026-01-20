@@ -6,7 +6,7 @@
 #define WIDTH 900
 #define HEIGHT 600
 
-#define PARTICLES_NUM 30
+#define PARTICLES_NUM 100
 #define GRAVITY 0.1
 #define SPEED 15
 #define DAMPENING_FACTOR 0.98f

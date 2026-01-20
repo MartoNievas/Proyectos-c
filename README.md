@@ -78,6 +78,7 @@ Each project is self-contained with its own build system and documentation.
 - Customizable layouts
 
 **Technologies**: Raylib 
+
 **Use Case**: Hardware testing, keyboard diagnostics, debugging input issues
 
 ---
