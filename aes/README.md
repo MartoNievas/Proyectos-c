@@ -1,92 +1,127 @@
 # AES Encryption Tool 🔐
 
-Una implementación completa del algoritmo de cifrado AES (Advanced Encryption Standard) en C, con una interfaz interactiva de línea de comandos para encriptar y desencriptar mensajes.
+A complete implementation of the AES (Advanced Encryption Standard) cipher algorithm in C, featuring an interactive command-line interface for message encryption and decryption.
 
-## 📋 Descripción
+## 📋 Overview
 
-Este proyecto implementa el algoritmo AES (Rijndael) desde cero, soportando las tres variantes estándar del cifrado:
+This project implements the AES (Rijndael) algorithm from scratch, supporting all three standard cipher variants:
 
-- **AES-128**: Clave de 128 bits (16 bytes)
-- **AES-192**: Clave de 192 bits (24 bytes)  
-- **AES-256**: Clave de 256 bits (32 bytes)
+- **AES-128**: 128-bit key (16 bytes)
+- **AES-192**: 192-bit key (24 bytes)  
+- **AES-256**: 256-bit key (32 bytes)
 
-La implementación incluye todas las operaciones fundamentales de AES: SubBytes, ShiftRows, MixColumns, AddRoundKey y sus inversas, junto con la expansión de claves (Key Schedule).
+The implementation includes all fundamental AES operations: SubBytes, ShiftRows, MixColumns, AddRoundKey and their inverses, along with the Key Schedule expansion algorithm.
 
-## ✨ Características
+## ✨ Features
 
-- ✅ Implementación completa de AES-128, AES-192 y AES-256
-- ✅ Interfaz interactiva de usuario
-- ✅ Padding PKCS#7 automático
-- ✅ Soporte para mensajes de longitud variable
-- ✅ Visualización hexadecimal de datos
-- ✅ Encriptación y desencriptación en bloques de 128 bits
-- ✅ Manejo de errores robusto
+- ✅ Full implementation of AES-128, AES-192, and AES-256
+- ✅ Interactive command-line interface
+- ✅ Automatic PKCS#7 padding
+- ✅ Variable-length message support
+- ✅ Hexadecimal data visualization
+- ✅ Block-based encryption/decryption (128-bit blocks)
+- ✅ Robust error handling
 
-## 🛠️ Requisitos
+## 🛠️ Requirements
 
-- Compilador GCC (o compatible con C99)
-- Make (opcional)
-- Sistema operativo: Linux, macOS, o Windows con MinGW
+- GCC compiler (or C99-compatible compiler)
+- Make utility
+- Operating System: Linux, macOS, or Windows with MinGW
 
-## 📦 Estructura del Proyecto
+## 📦 Project Structure
 
 ```
 aes-encryption-tool/
 │
 ├── include/
-│   └── aes.h              # Definiciones y prototipos
+│   └── aes.h              # Type definitions and function prototypes
 │
 ├── src/
-│   ├── aes.c              # Implementación del algoritmo AES
-│   └── main.c             # Programa principal interactivo
+│   ├── aes.c              # AES algorithm implementation
+│   └── main.c             # Interactive main program
 │
-├── README.md              # Este archivo
-└── Makefile               # Script de compilación (opcional)
+├── Makefile               # Build automation script
+└── README.md              # This file
 ```
 
-## 🚀 Compilación
+## 🚀 Building
 
-### Compilación manual:
-
-```bash
-gcc -o aes_tool src/main.c src/aes.c -I./include -Wall -Wextra -std=c99
-```
-
-### Con Makefile (si está disponible):
+### Quick build:
 
 ```bash
 make
 ```
 
-## 💻 Uso
-
-### Ejecución del programa:
+### Available targets:
 
 ```bash
-./aes_tool
+make all      # Compile the project (default)
+make clean    # Remove build artifacts
+make run      # Compile and execute the program
 ```
 
-### Flujo de trabajo:
+### Build system details:
 
-1. **Seleccionar el tamaño de clave:**
+The Makefile uses the following configuration:
+
+```makefile
+CC = gcc
+CFLAGS = -Wall -Wextra -g -std=c99
+INCLUDE = -I./include
+BUILD_DIR = build
+TARGET = $(BUILD_DIR)/aes_tool
+```
+
+**Compiler flags:**
+- `-Wall -Wextra`: Enable all warnings
+- `-g`: Include debugging symbols
+- `-std=c99`: Use C99 standard
+- `-I./include`: Specify header file location
+
+**Build process:**
+1. Creates `build/` directory if it doesn't exist
+2. Compiles source files to object files
+3. Links object files into final executable
+4. Outputs binary to `build/aes_tool`
+
+### Manual compilation (if needed):
+
+```bash
+mkdir -p build
+gcc -Wall -Wextra -g -std=c99 -o build/aes_tool src/main.c src/aes.c -I./include
+```
+
+## 💻 Usage
+
+### Running the program:
+
+```bash
+make run
+# or
+./build/aes_tool
+```
+
+### Workflow:
+
+1. **Select key size:**
    ```
    1. AES-128 (16 bytes key)
    2. AES-192 (24 bytes key)
    3. AES-256 (32 bytes key)
    ```
 
-2. **Ingresar la clave de encriptación:**
-   - Para AES-128: exactamente 16 caracteres
-   - Para AES-192: exactamente 24 caracteres
-   - Para AES-256: exactamente 32 caracteres
+2. **Enter encryption key:**
+   - AES-128: exactly 16 characters
+   - AES-192: exactly 24 characters
+   - AES-256: exactly 32 characters
 
-3. **Seleccionar operación:**
-   - Encriptar mensaje
-   - Desencriptar mensaje
+3. **Select operation:**
+   - Encrypt message
+   - Decrypt message
 
-4. **Ingresar el mensaje** (para encriptación) o usar el último mensaje encriptado (para desencriptación)
+4. **Input message** (for encryption) or use previous ciphertext (for decryption)
 
-### Ejemplo de sesión:
+### Example session:
 
 ```
 ╔════════════════════════════════════════╗
@@ -125,79 +160,78 @@ Plaintext (with padding): 48 65 6C 6C 6F 20 57 6F 72 6C 64 21 04 04 04 04
 ✓ Encryption successful!
 
 Ciphertext: A3 F2 8B 9C 1D 4E 7A 2F 8C 3B 6E 1A 9F 4D 2C 7E
-
-Select operation:
-  1. Encrypt message
-  2. Decrypt message
-  3. Back to main menu
-
-Choice: 2
-
-Using previous ciphertext for decryption...
-
-🔓 Decrypting...
-✓ Decryption successful!
-
-Decrypted (with padding): 48 65 6C 6C 6F 20 57 6F 72 6C 64 21 04 04 04 04
-Decrypted (no padding): 48 65 6C 6C 6F 20 57 6F 72 6C 64 21
-Decrypted message: "Hello World!"
 ```
 
-## 🔧 Detalles Técnicos
+## 🔧 Technical Details
 
-### Algoritmo AES
+### AES Algorithm Implementation
 
-El algoritmo implementa las siguientes transformaciones:
+The implementation follows the FIPS 197 specification with these transformations:
 
-**Encriptación:**
-1. AddRoundKey (clave inicial)
-2. Para cada ronda (excepto la última):
+**Encryption rounds:**
+1. Initial AddRoundKey (using original key)
+2. For rounds 1 to N-1:
+   - SubBytes (S-box substitution)
+   - ShiftRows (cyclic row shifts)
+   - MixColumns (column mixing in GF(2^8))
+   - AddRoundKey (XOR with round key)
+3. Final round (N):
    - SubBytes
    - ShiftRows
-   - MixColumns
-   - AddRoundKey
-3. Ronda final:
-   - SubBytes
-   - ShiftRows
-   - AddRoundKey
+   - AddRoundKey (no MixColumns)
 
-**Desencriptación:**
-1. AddRoundKey (última clave)
-2. Para cada ronda (excepto la última):
+**Decryption rounds:**
+1. Initial AddRoundKey (using last round key)
+2. For rounds N-1 to 1:
    - InvShiftRows
    - InvSubBytes
    - AddRoundKey
    - InvMixColumns
-3. Ronda final:
+3. Final round:
    - InvShiftRows
    - InvSubBytes
-   - AddRoundKey
+   - AddRoundKey (no InvMixColumns)
 
-### Padding PKCS#7
+**Number of rounds:**
+- AES-128: 10 rounds
+- AES-192: 12 rounds
+- AES-256: 14 rounds
 
-Los mensajes que no son múltiplos de 16 bytes se rellenan usando el estándar PKCS#7:
-- El valor del byte de padding es igual al número de bytes agregados
-- Ejemplo: Si faltan 4 bytes, se agregan `04 04 04 04`
+### PKCS#7 Padding Scheme
 
-### S-Box y Tablas
+Messages not aligned to 16-byte blocks are padded using PKCS#7:
+- Padding byte value equals the number of bytes added
+- Example: If 4 bytes needed → append `04 04 04 04`
+- Always applied, even if message is block-aligned (adds full block)
 
-- **S-Box**: Tabla de sustitución de 256 valores para SubBytes
-- **Inverse S-Box**: Tabla inversa para InvSubBytes
-- **RCON**: Constantes de ronda para la expansión de claves
+### Lookup Tables
 
-### Multiplicación en GF(2^8)
+- **S-Box (256 bytes)**: Substitution table for SubBytes transformation
+- **Inverse S-Box (256 bytes)**: Inverse substitution for InvSubBytes
+- **RCON (32 bytes)**: Round constants for key schedule
 
-El programa implementa la multiplicación en el campo de Galois GF(2^8) con el polinomio irreducible:
+### Galois Field Arithmetic
+
+Implements multiplication in GF(2^8) using the irreducible polynomial:
 ```
-x^8 + x^4 + x^3 + x + 1 (0x11B)
+m(x) = x^8 + x^4 + x^3 + x + 1 (0x11B in hex)
 ```
 
-## 📊 API del Código
+The `galois_mul()` function performs multiplication via the peasant's algorithm with modular reduction.
 
-### Funciones principales:
+## 📊 API Reference
+
+### Core Functions
 
 ```c
-// Encriptar un bloque de 16 bytes
+/**
+ * Encrypts a 16-byte block using AES
+ * @param plaintext  Input block (16 bytes)
+ * @param ciphertext Output block (16 bytes)
+ * @param key        Encryption key
+ * @param key_size   Key size (AES_KEY_128/192/256)
+ * @return Error code
+ */
 aes_error_t aes_encrypt(
     const uint8_t *plaintext,
     uint8_t *ciphertext,
@@ -205,7 +239,14 @@ aes_error_t aes_encrypt(
     aes_key_size_t key_size
 );
 
-// Desencriptar un bloque de 16 bytes
+/**
+ * Decrypts a 16-byte block using AES
+ * @param ciphertext Input block (16 bytes)
+ * @param plaintext  Output block (16 bytes)
+ * @param key        Decryption key
+ * @param key_size   Key size (AES_KEY_128/192/256)
+ * @return Error code
+ */
 aes_error_t aes_decrypt(
     const uint8_t *ciphertext,
     uint8_t *plaintext,
@@ -213,7 +254,13 @@ aes_error_t aes_decrypt(
     aes_key_size_t key_size
 );
 
-// Expandir la clave
+/**
+ * Expands the cipher key into round keys
+ * @param expanded_key     Output buffer for expanded key
+ * @param key              Input cipher key
+ * @param key_size         Size of input key
+ * @param expanded_key_size Size of output buffer
+ */
 void expand_key(
     uint8_t *expanded_key,
     const uint8_t *key,
@@ -221,92 +268,172 @@ void expand_key(
     size_t expanded_key_size
 );
 
-// Convertir código de error a string
+/**
+ * Converts error code to string description
+ * @param error_code Error code enum
+ * @return Error description string
+ */
 const char *aes_error_to_string(aes_error_t error_code);
 ```
 
-### Tipos de datos:
+### Type Definitions
 
 ```c
+/**
+ * Supported AES key sizes
+ */
 typedef enum {
-    AES_KEY_128 = 16,
-    AES_KEY_192 = 24,
-    AES_KEY_256 = 32
+    AES_KEY_128 = 16,  // 128-bit key
+    AES_KEY_192 = 24,  // 192-bit key
+    AES_KEY_256 = 32   // 256-bit key
 } aes_key_size_t;
 
+/**
+ * Error codes returned by AES functions
+ */
 typedef enum {
-    AES_SUCCESS = 0,
-    AES_MEMORY_ALLOCATION_FAILED,
-    AES_ERROR_UNSUPORTED_KEY_SIZE
+    AES_SUCCESS = 0,                    // Operation successful
+    AES_MEMORY_ALLOCATION_FAILED,       // malloc() failed
+    AES_ERROR_UNSUPORTED_KEY_SIZE       // Invalid key size
 } aes_error_t;
 
+/**
+ * AES state matrix (4x4 bytes)
+ */
 typedef uint8_t aes_matrix_state_t[4][4];
 ```
 
-## ⚠️ Consideraciones de Seguridad
+### Constants
 
-**Este proyecto es para fines educativos.** Para uso en producción, considere:
+```c
+#define AES_BLOCK_SIZE 16          // Block size in bytes
+#define STATE_MATRIX_SIZE 4        // State matrix dimension
+#define WORD_SIZE 4                // Word size in bytes
+#define BITS_PER_BYTE 8            // Bits per byte
+#define GF_REDUCING_POLYNOMIAL 0x1B // Galois field polynomial
+#define GF_MSB_MASK 0x80           // MSB mask for GF operations
+```
 
-- ✅ Usar bibliotecas criptográficas auditadas (OpenSSL, libsodium)
-- ✅ Implementar modos de operación seguros (CBC, GCM)
-- ✅ Agregar vectores de inicialización (IV)
-- ✅ Implementar autenticación de mensajes (MAC)
-- ✅ Proteger claves en memoria
-- ✅ Usar generadores de números aleatorios criptográficamente seguros
+## ⚠️ Security Considerations
 
-**Vulnerabilidades conocidas en esta implementación:**
-- No usa modo de operación (solo ECB implícito)
-- No tiene autenticación de mensajes
-- Las claves se manejan en texto plano en memoria
-- No protege contra ataques de canal lateral (timing attacks)
+**THIS IS AN EDUCATIONAL PROJECT.** For production use, consider:
+
+### Known limitations:
+- ❌ No cipher mode implementation (effectively ECB)
+- ❌ No message authentication (MAC/AEAD)
+- ❌ No IV (Initialization Vector) support
+- ❌ Keys stored in plaintext in memory
+- ❌ Not hardened against side-channel attacks
+- ❌ No constant-time operations
+- ❌ No secure memory wiping
+
+### Production recommendations:
+- ✅ Use audited cryptographic libraries (OpenSSL, libsodium, mbedTLS)
+- ✅ Implement secure modes of operation (CBC, CTR, GCM)
+- ✅ Add authenticated encryption (AES-GCM, ChaCha20-Poly1305)
+- ✅ Use random IVs for each encryption
+- ✅ Implement secure key derivation (PBKDF2, Argon2)
+- ✅ Clear sensitive data from memory after use
+- ✅ Use constant-time operations to prevent timing attacks
+
+**DO NOT USE THIS CODE FOR:**
+- Production applications requiring security
+- Protecting sensitive data
+- Any system where security is critical
 
 ## 🧪 Testing
 
-Para verificar que la implementación funciona correctamente:
+### Basic functionality test:
 
 ```bash
-# Compilar
-gcc -o aes_tool src/main.c src/aes.c -I./include -Wall -Wextra
-
-# Ejecutar
-./aes_tool
-
-# Probar con vectores de test conocidos:
-# Mensaje: "TestMessage12345"
-# Clave AES-128: "0123456789ABCDEF"
-# Verificar que encriptar y desencriptar devuelve el mensaje original
+make run
 ```
 
-## 📚 Referencias
+### Test vectors (from FIPS 197):
 
+**AES-128 Test:**
+```
+Key:        2b7e151628aed2a6abf7158809cf4f3c
+Plaintext:  3243f6a8885a308d313198a2e0370734
+Ciphertext: 3925841d02dc09fbdc118597196a0b32
+```
+
+### Verification steps:
+
+1. Compile the program: `make`
+2. Run: `./build/aes_tool`
+3. Select AES-128
+4. Enter a 16-character key
+5. Encrypt a test message
+6. Decrypt the ciphertext
+7. Verify original message is recovered
+
+### Unit testing (future work):
+
+```c
+// Example test structure
+void test_aes_128_encryption() {
+    uint8_t key[16] = {0x2b, 0x7e, 0x15, ...};
+    uint8_t plaintext[16] = {0x32, 0x43, 0xf6, ...};
+    uint8_t expected[16] = {0x39, 0x25, 0x84, ...};
+    uint8_t ciphertext[16];
+    
+    aes_encrypt(plaintext, ciphertext, key, AES_KEY_128);
+    assert(memcmp(ciphertext, expected, 16) == 0);
+}
+```
+
+## 📚 References
+
+### Standards and specifications:
 - [FIPS 197 - AES Specification](https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf)
-- [The Rijndael Block Cipher](https://csrc.nist.gov/csrc/media/projects/cryptographic-standards-and-guidelines/documents/aes-development/rijndael-ammended.pdf)
+- [The Rijndael Block Cipher - AES Proposal](https://csrc.nist.gov/csrc/media/projects/cryptographic-standards-and-guidelines/documents/aes-development/rijndael-ammended.pdf)
+
+### Educational resources:
 - [Wikipedia - Advanced Encryption Standard](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
+- [A Stick Figure Guide to AES](http://www.moserware.com/2009/09/stick-figure-guide-to-advanced.html)
+- [AES Animation](https://www.youtube.com/watch?v=mlzxpkdXP58)
 
-## 🤝 Contribuciones
+### Cryptographic best practices:
+- [OWASP Cryptographic Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html)
+- [libsodium Documentation](https://doc.libsodium.org/)
 
-Las contribuciones son bienvenidas. Por favor:
+## 🤝 Contributing
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+Contributions are welcome! Please follow these guidelines:
 
-## 📝 Licencia
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/YourFeature`
+3. Commit changes: `git commit -m 'Add YourFeature'`
+4. Push to branch: `git push origin feature/YourFeature`
+5. Submit a Pull Request
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+### Code style:
+- Follow K&R indentation style
+- Use descriptive variable names
+- Comment complex algorithms
+- Maintain consistent formatting
 
-## 👨‍💻 Autor
+### Testing:
+- Test all three key sizes (128/192/256)
+- Verify encrypt/decrypt roundtrip
+- Check error handling paths
+- Test edge cases (empty input, max length, etc.)
 
-Desarrollado como proyecto educativo para entender la implementación del algoritmo AES.
+## 📝 License
 
-## 🙏 Agradecimientos
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-- Al NIST por la especificación AES
-- A Joan Daemen y Vincent Rijmen por el algoritmo Rijndael
-- A la comunidad de criptografía de código abierto
+## 👨‍💻 Author
+
+Developed as an educational project to understand AES implementation details.
+
+## 🙏 Acknowledgments
+
+- NIST for the AES specification
+- Joan Daemen and Vincent Rijmen for the Rijndael algorithm
+- The open-source cryptography community
 
 ---
 
-**Nota**: Este es un proyecto educativo. No use este código para aplicaciones que requieran seguridad real sin una auditoría de seguridad profesional.
+**⚠️ DISCLAIMER**: This is an educational implementation. Do not use in production systems without professional security audit. For real-world applications, use established cryptographic libraries.
