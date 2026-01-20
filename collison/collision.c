@@ -1,12 +1,15 @@
 #include "raylib.h"
 #include <math.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #define WIDTH 900
 #define HEIGHT 600
 
 #define PARTICLES_NUM 30
-
+#define GRAVITY 0.1
+#define SPEED 15
+#define DAMPENING_FACTOR 0.98f
 typedef struct {
   float x;
   float y;
@@ -23,6 +26,7 @@ void DrawParticle(Particle *particle) {
 }
 
 void UpdateParticle(Particle *particle) {
+  particle->vy += GRAVITY;
   particle->x += particle->vx;
   particle->y += particle->vy;
 
@@ -30,21 +34,32 @@ void UpdateParticle(Particle *particle) {
   float y = particle->y;
   float r = particle->r;
 
+  bool collision = false;
+
   if (x + r > WIDTH) {
     particle->vx *= -1;
     particle->x = WIDTH - r;
+    collision = true;
   }
   if (x - r < 0) {
     particle->vx *= -1;
     particle->x = r;
+    collision = true;
   }
   if (y + r > HEIGHT) {
     particle->vy *= -1;
     particle->y = HEIGHT - r;
+    collision = true;
   }
   if (y - r < 0) {
     particle->vy *= -1;
     particle->y = r;
+    collision = true;
+  }
+
+  if (collision) {
+    particle->vx *= DAMPENING_FACTOR;
+    particle->vy *= DAMPENING_FACTOR;
   }
 }
 
@@ -56,13 +71,14 @@ void InitParticles() {
     p->r = (float)GetRandomValue(5, 15);
     p->x = (float)GetRandomValue(p->r, WIDTH);
     p->y = (float)GetRandomValue(p->r, HEIGHT);
-    p->vx = (float)GetRandomValue(-5, 5);
-    p->vy = (float)GetRandomValue(-5, 5);
+    p->vx = (float)GetRandomValue(-SPEED, SPEED);
+    p->vy = (float)GetRandomValue(-SPEED, SPEED);
     p->mass = (float)p->r;
   }
 }
 
 void CollisionAllParticles() {
+  bool collision = false;
   for (int i = 0; i < PARTICLES_NUM; i++) {
     for (int j = i + 1; j < PARTICLES_NUM; j++) {
       Particle *p1 = particles[i];
@@ -74,6 +90,7 @@ void CollisionAllParticles() {
       float radiusSum = p1->r + p2->r;
 
       if (distanceSq < (radiusSum * radiusSum)) {
+        collision = true;
         float dist = sqrt(distanceSq);
         float nx = dx / dist;
         float ny = dy / dist;
@@ -103,6 +120,12 @@ void CollisionAllParticles() {
         p1->y -= ny * (overlap * ratio1);
         p2->x += nx * (overlap * ratio2);
         p2->y += ny * (overlap * ratio2);
+        if (collision) {
+          p1->vx *= DAMPENING_FACTOR;
+          p1->vy *= DAMPENING_FACTOR;
+          p2->vx *= DAMPENING_FACTOR;
+          p2->vy *= DAMPENING_FACTOR;
+        }
       }
     }
   }
