@@ -102,7 +102,7 @@ void join(int argc, char *argv[]) {
   }
 
   // Output file is second to last argument
-  char *filejoin_path = argv[argc - 2];
+  char *filejoin_path = argv[argc - 1];
   FILE *filejoin = fopen(filejoin_path, "wb");
   if (!filejoin) {
     printf("Error: Cannot create output file %s\n", filejoin_path);
@@ -111,7 +111,7 @@ void join(int argc, char *argv[]) {
   }
 
   // Process each input file part
-  for (int i = 1; i < argc - 2; i++) {
+  for (int i = 2; i < argc - 1; i++) {
     char *filepart_path = argv[i];
 
     FILE *filepart = fopen(filepart_path, "rb");
@@ -138,12 +138,12 @@ void join(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
   if (argc < 3) {
     printf("Usage:\n");
-    printf("  Split: %s <file> <num_parts> -s\n", argv[0]);
-    printf("  Join:  %s <part1> <part2> ... <output_file> -j\n", argv[0]);
+    printf("  Split: %s -s <file> <num_parts> \n", argv[0]);
+    printf("  Join:  %s -j <part1> <part2> ... <output_file> \n", argv[0]);
     return -1;
   }
 
-  char *flag = argv[argc - 1];
+  char *flag = argv[1];
 
   // Split mode
   if (strcmp(flag, "-s") == 0) {
@@ -152,8 +152,8 @@ int main(int argc, char *argv[]) {
       return -1;
     }
 
-    char *fpath = argv[1];
-    int num = atoi(argv[2]);
+    char *fpath = argv[2];
+    int num = atoi(argv[3]);
 
     FILE *file = fopen(fpath, "rb");
     if (!file) {
