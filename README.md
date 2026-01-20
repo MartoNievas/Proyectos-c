@@ -61,7 +61,7 @@ Each project is self-contained with its own build system and documentation.
 - Canvas save/load functionality
 - Undo/redo support
 
-**Technologies**: SDL2 / GTK3 (depending on implementation)
+**Technologies**: SDL2 
 
 **Use Case**: Simple raster graphics editor, educational graphics programming
 
@@ -77,8 +77,7 @@ Each project is self-contained with its own build system and documentation.
 - Dead key detection
 - Customizable layouts
 
-**Technologies**: SDL2 / GTK3, X11/Wayland
-
+**Technologies**: Raylib 
 **Use Case**: Hardware testing, keyboard diagnostics, debugging input issues
 
 ---
@@ -93,7 +92,7 @@ Each project is self-contained with its own build system and documentation.
 - Touchpad gesture recognition
 - Accuracy testing mode
 
-**Technologies**: SDL2, X11/Wayland input APIs
+**Technologies**: X11/Wayland input APIs
 
 **Use Case**: Input device testing, touchpad calibration, gaming hardware validation
 
@@ -160,7 +159,7 @@ Each project is self-contained with its own build system and documentation.
 - Charging status detection
 - System tray integration
 
-**Technologies**: D-Bus, libnotify, UPower
+**Technologies**: libnotify
 
 **Use Case**: Laptop power management, preventing data loss from unexpected shutdowns
 
@@ -177,7 +176,7 @@ Each project is self-contained with its own build system and documentation.
 - Multiple block size testing
 - Results export to CSV/JSON
 
-**Technologies**: POSIX I/O, direct I/O, `fopen()`, `fread()`, `fwrite()`
+**Technologies**: POSIX I/O, direct I/O, `open()`, `read()`, `write()`
 
 **Use Case**: SSD/HDD performance validation, storage comparison, system diagnostics
 
@@ -201,7 +200,7 @@ F = -kx - cv
 m(d²x/dt²) = -kx - c(dx/dt)
 ```
 
-**Technologies**: SDL2, numerical integration (Euler, RK4)
+**Technologies**: SDL2
 
 **Use Case**: Physics education, mechanical system modeling, algorithm testing
 
