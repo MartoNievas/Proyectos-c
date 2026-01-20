@@ -7,6 +7,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 
 // Number of rounds for each key size.
@@ -17,13 +19,7 @@
 #define WORD_SIZE 4
 #define BITS_PER_BYTE 8
 
-/*Galois Field (GF(2^3)) constan for the mix columns*/
-#define GF_REDUCING_POLYNOMIAL 0x1B
-/*Irreducible polynomial for AES: x^8 + x^4 + x^3 + x + 1*/
-#define GF_MSB_MASK 0x80
-
 /*definition of Subtituin box*/
-
 //! The AES Substitution Box (S-Box)
 static const uint8_t sbox[256] = {
     // 0     1     2     3     4     5     6     7     8     9     A     B     C
@@ -106,9 +102,6 @@ static const uint8_t rcon[] = {0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40,
                                0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a,
                                0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39};
 
-static const aes_params_t aes_params[3] = {{AES_WORD_128, AES_ROUNDS_128},
-                                           {AES_WORD_192, AES_ROUNDS_192},
-                                           {AES_WORD_256, AES_ROUNDS_256}};
 /*galois mul for the mix columns*/
 
 static void word_rotate_left(uint8_t *word) {
@@ -120,40 +113,50 @@ static void word_rotate_left(uint8_t *word) {
 }
 
 static void key_schedule_core(uint8_t *word, uint8_t iteration) {
-
   word_rotate_left(word);
 
-  for (uint8_t i = 0; i < WORD_SIZE; ++i) {
+  for (uint8_t i = 0; i < WORD_SIZE; ++i)
     word[i] = sbox[word[i]];
 
-    word[0] ^= rcon[iteration];
-  }
+  word[0] ^= rcon[iteration];
 }
 
-static uint8_t galois_mul(uint8_t a, uint8_t b) {
+void expand_key(uint8_t *expanded_key, const uint8_t *key,
+                aes_key_size_t key_size, size_t expanded_key_size) {
+  size_t current_size = (size_t)key_size;
+  uint8_t rcon_iteration = 1;
+  uint8_t temp_word[WORD_SIZE];
 
-  uint8_t p = 0;
-  for (int i = 0; i < BITS_PER_BYTE; i++) {
+  for (size_t i = 0; i < current_size; i++)
+    expanded_key[i] = key[i];
 
-    if (b & 1)
-      p ^= a;
+  while (current_size < expanded_key_size) {
+    for (size_t i = 0; i < WORD_SIZE; i++)
+      temp_word[i] = expanded_key[current_size - WORD_SIZE + i];
 
-    uint8_t hi_bit_set = a & GF_MSB_MASK;
-    a <<= 1;
+    if (current_size % (size_t)key_size == 0) {
+      key_schedule_core(temp_word, rcon_iteration++);
+    }
 
-    if (hi_bit_set)
-      a ^= GF_REDUCING_POLYNOMIAL;
+    if (key_size == AES_KEY_SIZE_256 &&
+        (current_size % (size_t)key_size) == AES_BLOCK_SIZE) {
+      for (size_t i = 0; i < WORD_SIZE; i++)
+        temp_word[i] = sbox[temp_word[i]];
+    }
 
-    b >>= 1;
+    for (size_t i = 0; i < WORD_SIZE; i++) {
+      expanded_key[current_size] =
+          expanded_key[current_size - (size_t)key_size] ^ temp_word[i];
+      current_size++;
+    }
   }
-  return p;
 }
 
 /*implementation*/
 
 static void sub_bytes(aes_matrix_state_t state) {
   if (!state) {
-    perror("ERROR: Null pointer in sub_bytes\n");
+    fprintf(stderr, "ERROR: Null pointer in sub_bytes\n");
     return;
   }
 
@@ -166,7 +169,7 @@ static void sub_bytes(aes_matrix_state_t state) {
 
 static void inv_sub_bytes(aes_matrix_state_t state) {
   if (!state) {
-    perror("ERROR: Null pointer in sub_bytes\n");
+    fprintf(stderr, "ERROR: Null pointer in sub_bytes\n");
     return;
   }
   for (int i = 0; i < STATE_MATRIX_SIZE; i++) {
@@ -178,7 +181,7 @@ static void inv_sub_bytes(aes_matrix_state_t state) {
 
 static void shift_rows(aes_matrix_state_t state) {
   if (!state) {
-    perror("ERROR: Null pointer in shift_rows");
+    fprintf(stderr, "ERROR: Null pointer in shift_rows\n");
     return;
   }
 
@@ -212,7 +215,7 @@ static void shift_rows(aes_matrix_state_t state) {
 static void inv_shift_rows(aes_matrix_state_t state) {
 
   if (!state) {
-    perror("ERROR: Null pointer in inv_shift_rows");
+    fprintf(stderr, "ERROR: Null pointer in inv_shift_rows\n");
     return;
   }
   uint8_t temp;
@@ -226,13 +229,13 @@ static void inv_shift_rows(aes_matrix_state_t state) {
 
   // row 2 shift 2 bytes to right
 
-  temp = state[2][3];
-  state[2][3] = state[2][2];
+  temp = state[2][0];
+  state[2][0] = state[2][2];
   state[2][2] = temp;
 
   temp = state[2][1];
-  state[2][1] = state[2][0];
-  state[2][0] = temp;
+  state[2][1] = state[2][3];
+  state[2][3] = temp;
 
   // row 3 shift 3 bytes to right
 
@@ -243,135 +246,224 @@ static void inv_shift_rows(aes_matrix_state_t state) {
   state[3][2] = temp;
 }
 
+static uint8_t galois_mul(uint8_t a, uint8_t b) {
+  uint8_t p = 0;
+  for (int i = 0; i < BITS_PER_BYTE; i++) {
+    if (b & 1)
+      p ^= a;
+
+    uint8_t hi_bit_set = a & GF_MSB_MASK;
+    a <<= 1;
+
+    if (hi_bit_set)
+      a ^= GF_REDUCING_POLYNOMIAL;
+
+    b >>= 1;
+  }
+  return p;
+}
+
 static void mix_columns(aes_matrix_state_t state) {
+
   if (!state) {
-    perror("ERROR: Null pointer in mix_columns");
+    fprintf(stderr, "ERROR: Null pointer in mix");
     return;
   }
 
-  uint8_t t[4];
+  uint8_t t[STATE_MATRIX_SIZE];
+  for (int c = 0; c < STATE_MATRIX_SIZE; ++c) {
+    for (int r = 0; r < STATE_MATRIX_SIZE; ++r)
+      t[r] = (state)[r][c];
 
-  for (int i = 0; i < 4; i++) {
-
-    t[0] = state[0][i];
-    t[1] = state[1][i];
-    t[2] = state[2][i];
-    t[3] = state[3][i];
-
-    state[0][i] = galois_mul(t[0], 2) ^ galois_mul(t[1], 3) ^ t[2] ^ t[3];
-    state[1][i] = t[0] ^ galois_mul(t[1], 2) ^ galois_mul(t[2], 3) ^ t[3];
-    state[2][i] = t[0] ^ t[1] ^ galois_mul(t[2], 2) ^ galois_mul(t[3], 3);
-    state[3][i] = galois_mul(t[0], 3) ^ t[1] ^ t[2] ^ galois_mul(t[3], 2);
+    (state)[0][c] = galois_mul(t[0], 2) ^ galois_mul(t[1], 3) ^ t[2] ^ t[3];
+    (state)[1][c] = t[0] ^ galois_mul(t[1], 2) ^ galois_mul(t[2], 3) ^ t[3];
+    (state)[2][c] = t[0] ^ t[1] ^ galois_mul(t[2], 2) ^ galois_mul(t[3], 3);
+    (state)[3][c] = galois_mul(t[0], 3) ^ t[1] ^ t[2] ^ galois_mul(t[3], 2);
   }
 }
 
 static void inv_mix_columns(aes_matrix_state_t state) {
+
   if (!state) {
-    perror("ERROR: Null pointer in inv_mix_columns");
+    fprintf(stderr, "ERROR: Null pointer in inv_mix_columns");
     return;
   }
 
-  uint8_t t[4];
+  uint8_t t[STATE_MATRIX_SIZE];
+  for (int c = 0; c < STATE_MATRIX_SIZE; ++c) {
+    for (int r = 0; r < STATE_MATRIX_SIZE; ++r)
+      t[r] = (state)[r][c];
 
-  for (int c = 0; c < 4; c++) {
-
-    t[0] = state[0][c];
-    t[1] = state[1][c];
-    t[2] = state[2][c];
-    t[3] = state[3][c];
-
-    state[0][c] = galois_mul(t[0], 14) ^ galois_mul(t[1], 11) ^
-                  galois_mul(t[2], 13) ^ galois_mul(t[3], 9);
-
-    state[1][c] = galois_mul(t[0], 9) ^ galois_mul(t[1], 14) ^
-                  galois_mul(t[2], 11) ^ galois_mul(t[3], 13);
-
-    state[2][c] = galois_mul(t[0], 13) ^ galois_mul(t[1], 9) ^
-                  galois_mul(t[2], 14) ^ galois_mul(t[3], 11);
-
-    state[3][c] = galois_mul(t[0], 11) ^ galois_mul(t[1], 13) ^
-                  galois_mul(t[2], 9) ^ galois_mul(t[3], 14);
+    (state)[0][c] = galois_mul(t[0], 14) ^ galois_mul(t[1], 11) ^
+                    galois_mul(t[2], 13) ^ galois_mul(t[3], 9);
+    (state)[1][c] = galois_mul(t[0], 9) ^ galois_mul(t[1], 14) ^
+                    galois_mul(t[2], 11) ^ galois_mul(t[3], 13);
+    (state)[2][c] = galois_mul(t[0], 13) ^ galois_mul(t[1], 9) ^
+                    galois_mul(t[2], 14) ^ galois_mul(t[3], 11);
+    (state)[3][c] = galois_mul(t[0], 11) ^ galois_mul(t[1], 13) ^
+                    galois_mul(t[2], 9) ^ galois_mul(t[3], 14);
   }
 }
 
-static void add_round_key(aes_matrix_state_t state, aes_round_key_t round_key) {
+static void add_round_key(aes_matrix_state_t state, const uint8_t *round_key) {
   if (!state || !round_key) {
-    perror("ERROR: Null pointer in add_round_key");
+    fprintf(stderr, "ERROR: Null pointer in add_round_key\n");
     return;
   }
 
-  for (int i = 0; i < STATE_MATRIX_SIZE; i++) {
-    for (int j = 0; j < STATE_MATRIX_SIZE; j++) {
-      state[i][j] ^= round_key[i][j];
-    }
-  }
+  for (int c = 0; c < STATE_MATRIX_SIZE; ++c)
+    for (int r = 0; r < STATE_MATRIX_SIZE; ++r)
+      state[r][c] ^= round_key[c * STATE_MATRIX_SIZE + r];
 }
 
-/*Function to generate and print state matrix*/
-static void define_matrix_state(aes_matrix_state_t state, char *word) {
-  if (!state || !word) {
-    perror("ERROR: Null pointer in define_matrix_state\n");
+static void cipher_encrypt_block(aes_matrix_state_t state,
+                                 const uint8_t *expanded_key,
+                                 uint16_t num_rounds) {
+
+  if (!state || !expanded_key) {
+    fprintf(stderr, "ERROR: Null pointer in cipher_encrypt_block");
     return;
   }
 
-  for (int i = 0; i < 16; i++) {
-    state[i % 4][i / 4] = (uint8_t)word[i];
+  add_round_key(state, expanded_key);
+  for (uint16_t round = 1; round < num_rounds; round++) {
+    sub_bytes(state);
+    shift_rows(state);
+    mix_columns(state);
+    add_round_key(state, expanded_key + (AES_BLOCK_SIZE * round));
   }
-}
-
-static void print_matrix(aes_matrix_state_t state) {
-
-  for (int i = 0; i < STATE_MATRIX_SIZE; i++) {
-    for (int j = 0; j < STATE_MATRIX_SIZE; j++) {
-      printf("%2X ", state[i][j]);
-    }
-    printf("\n");
-  }
-}
-
-int main(int argc, char *argv[]) {
-  if (argc != 2) {
-    fprintf(stderr, "Usage: %s <16-byte word>\n", argv[0]);
-    return 1;
-  }
-
-  char *word = argv[1];
-
-  // Validar que el input tenga exactamente 16 bytes
-  size_t len = 0;
-  while (word[len] != '\0') {
-    len++;
-  }
-
-  if (len != 16) {
-    fprintf(stderr, "ERROR: Input must be exactly 16 bytes (got %zu)\n", len);
-    return 1;
-  }
-
-  aes_matrix_state_t state = {0};
-
-  define_matrix_state(state, word);
-  printf("Original matrix:\n");
-  print_matrix(state);
-
-  printf("----------------------------\n");
   sub_bytes(state);
-  printf("After SubBytes:\n");
-  print_matrix(state);
+  shift_rows(state);
+  add_round_key(state, expanded_key + (AES_BLOCK_SIZE * num_rounds));
+}
 
-  printf("----------------------------\n");
-  mix_columns(state);
-  printf("After MixColumns:\n");
-  print_matrix(state);
+static void cipher_decrypt_block(aes_matrix_state_t state,
+                                 const uint8_t *expanded_key,
+                                 uint16_t num_rounds) {
 
-  printf("----------------------------\n");
-  inv_mix_columns(state);
-  printf("After InvMixColumns:\n");
-  print_matrix(state);
-  printf("----------------------------\n");
-  printf("After inv_sub_bytes\n");
+  if (!state || !expanded_key) {
+    fprintf(stderr, "ERROR: Null pointer in cipher_decrypt_block");
+    return;
+  }
+
+  add_round_key(state, expanded_key + (AES_BLOCK_SIZE * num_rounds));
+  for (uint16_t round = num_rounds; round > 1; round--) {
+    inv_shift_rows(state);
+    inv_sub_bytes(state);
+    add_round_key(state, expanded_key + (AES_BLOCK_SIZE * (round - 1)));
+    inv_mix_columns(state);
+  }
+  inv_shift_rows(state);
   inv_sub_bytes(state);
-  print_matrix(state);
+  add_round_key(state, expanded_key);
+}
 
-  return 0;
+static void init_state_matrix(aes_matrix_state_t state,
+                              const uint8_t *plaintext) {
+  if (!state || !plaintext) {
+    fprintf(stderr, "ERROR: Null in init_state_matrix");
+    return;
+  }
+  for (uint8_t i = 0; i < STATE_MATRIX_SIZE * STATE_MATRIX_SIZE; i++) {
+    state[i % 4][i / 4] = plaintext[i];
+  }
+}
+
+static void state_to_text(aes_matrix_state_t state, uint8_t *text) {
+  if (!state || !text) {
+    fprintf(stderr, "ERROR: Null pointer in state_to_text");
+    return;
+  }
+  for (uint8_t i = 0; i < STATE_MATRIX_SIZE * STATE_MATRIX_SIZE; i++) {
+    text[i] = state[i % 4][i / 4];
+  }
+}
+
+aes_error_t aes_encrypt(const uint8_t *plaintext, uint8_t *ciphertext,
+                        const uint8_t *key, aes_key_size_t key_size) {
+  if (!plaintext || !ciphertext || !key)
+    return AES_ERROR_UNSUPORTED_KEY_SIZE;
+
+  uint16_t num_rounds;
+  switch (key_size) {
+  case AES_KEY_SIZE_128:
+    num_rounds = AES_ROUNDS_128;
+    break;
+  case AES_KEY_SIZE_192:
+    num_rounds = AES_ROUNDS_192;
+    break;
+  case AES_KEY_SIZE_256:
+    num_rounds = AES_ROUNDS_256;
+    break;
+  default:
+    return AES_ERROR_UNSUPORTED_KEY_SIZE;
+  }
+
+  size_t expanded_key_size = (size_t)AES_BLOCK_SIZE * (num_rounds + 1);
+  uint8_t *expanded_key = (uint8_t *)malloc(expanded_key_size);
+  if (!expanded_key)
+    return AES_ERROR_MEMORY_ALLOCATION_FAILED;
+
+  expand_key(expanded_key, key, key_size, expanded_key_size);
+
+  aes_matrix_state_t state;
+  init_state_matrix(state, plaintext);
+
+  cipher_encrypt_block(state, expanded_key, num_rounds);
+
+  state_to_text(state, ciphertext);
+
+  free(expanded_key);
+  return AES_SUCCESS;
+}
+
+aes_error_t aes_decrypt(const uint8_t *ciphertext, uint8_t *plaintext,
+                        const uint8_t *key, aes_key_size_t key_size) {
+  if (!ciphertext || !plaintext || !key)
+    return AES_ERROR_UNSUPORTED_KEY_SIZE;
+
+  uint16_t num_rounds;
+  switch (key_size) {
+  case AES_KEY_SIZE_128:
+    num_rounds = AES_ROUNDS_128;
+    break;
+  case AES_KEY_SIZE_192:
+    num_rounds = AES_ROUNDS_192;
+    break;
+  case AES_KEY_SIZE_256:
+    num_rounds = AES_ROUNDS_256;
+    break;
+  default:
+    return AES_ERROR_UNSUPORTED_KEY_SIZE;
+  }
+
+  size_t expanded_key_size = (size_t)AES_BLOCK_SIZE * (num_rounds + 1);
+  uint8_t *expanded_key = (uint8_t *)malloc(expanded_key_size);
+  if (!expanded_key)
+    return AES_ERROR_MEMORY_ALLOCATION_FAILED;
+
+  expand_key(expanded_key, key, key_size, expanded_key_size);
+
+  aes_matrix_state_t state;
+  init_state_matrix(state, ciphertext);
+
+  cipher_decrypt_block(state, expanded_key, num_rounds);
+
+  state_to_text(state, plaintext);
+
+  free(expanded_key);
+  return AES_SUCCESS;
+}
+
+const char *aes_error_to_string(aes_error_t error_code) {
+  switch (error_code) {
+  case AES_SUCCESS:
+    return "Success";
+  case AES_ERROR_MEMORY_ALLOCATION_FAILED:
+    return "Memory allocation failed";
+  case AES_ERROR_UNSUPORTED_KEY_SIZE:
+    return "Unsuported key size";
+  default:
+    return "Unknown error code ocurred";
+  }
 }
