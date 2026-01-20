@@ -111,15 +111,6 @@ Each project is self-contained with its own build system and documentation.
 - Progress indication
 - Configurable chunk sizes
 
-**Usage**:
-```bash
-# Split file into 5 parts
-./filesplit -s largefile.bin 5
-
-# Join parts back together
-./filesplit -j part1.bin part2.bin part3.bin -o original.bin
-```
-
 **Technologies**: Standard C libraries, POSIX I/O
 
 **Use Case**: Large file transfer, backup management, storage optimization
@@ -263,15 +254,6 @@ m(d²x/dt²) = -kx - c(dx/dt)
 - Network statistics
 - Raw socket mode
 
-**Usage**:
-```bash
-# Send message
-./udp_send -h 192.168.1.100 -p 8080 -m "Hello World"
-
-# Listen for messages
-./udp_recv -p 8080
-```
-
 **Technologies**: POSIX sockets, `sendto()`, `recvfrom()`
 
 **Use Case**: Network testing, IoT communication, game networking, service discovery
@@ -337,51 +319,6 @@ AND   = λp.λq.p q p
 
 ### Mathematical Libraries
 - **TinyExpr**: Mathematical expression parsing and evaluation
-
-### Build Systems
-- **Make**: Traditional Unix build automation
-- **CMake**: Cross-platform build system (where applicable)
-
----
-
-## 🏗️ Building Projects
-
-### Prerequisites
-
-```bash
-# Debian/Ubuntu
-sudo apt-get install build-essential libsdl2-dev libgtk-3-dev \
-    libvte-2.91-dev libnotify-dev libudev-dev
-
-# Fedora
-sudo dnf install gcc make SDL2-devel gtk3-devel vte291-devel \
-    libnotify-devel systemd-devel
-
-# Arch Linux
-sudo pacman -S base-devel sdl2 gtk3 vte3 libnotify systemd
-```
-
-### General Build Instructions
-
-Most projects follow this pattern:
-
-```bash
-# Navigate to project directory
-cd project-name/
-
-# Build
-make
-
-# Run
-./build/project-name
-
-# Clean
-make clean
-```
-
-### Project-Specific Build Notes
-
-Check each project's subdirectory for specific build requirements and dependencies.
 
 ---
 
