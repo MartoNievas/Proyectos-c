@@ -1,12 +1,26 @@
 [Unit]
-Description=Battery notifications
+# Short description of the service
+Description=Battery Notification Service
+# Ensure the service only starts once the graphical session (dwm/X/Dunst) is ready
+After=graphical-session.target
+# Automatically stop the service when the graphical session ends
+PartOf=graphical-session.target
 
 [Service]
-Type=simple
+# The path to your compiled C binary
 ExecStart=/usr/local/bin/lowbattery
+# Restart the service automatically if it exits unexpectedly
 Restart=on-failure
-RestartSec=30
+# Wait 5 seconds before trying to restart after a failure
+RestartSec=5
+
+# ENVIRONMENT CONFIGURATION
+# Required for libnotify to know which screen to draw on (usually :0)
+Environment=DISPLAY=:0
+# Required for the program to talk to the D-Bus notification daemon (Dunst)
+# Note: '1000' is the standard UID; verify yours by running 'id -u' in terminal
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
 
 [Install]
-WantedBy=default.target
-
+# Link this service to your user's graphical session startup
+WantedBy=graphical-session.target
