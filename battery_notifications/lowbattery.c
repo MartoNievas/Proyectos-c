@@ -8,9 +8,10 @@
 #include <sys/file.h>
 #include <unistd.h>
 
+/* Thresholds and Configuration */
 #define LOW_BATTERY_WARNING_THRESHOLD 20
-#define TLP_ACTIVATION_THRESHOLD 80
-#define CHECK_INTERVAL 5 // seconds between checks
+#define TLP_INFO_THRESHOLD 80
+#define CHECK_INTERVAL 5
 
 #define F_LOW 1
 #define F_CHG 2
@@ -18,46 +19,40 @@
 
 volatile sig_atomic_t run = 1;
 
+/* Signal handler to stop the loop gracefully */
 void stop_handler(int sig) {
   (void)sig;
   run = 0;
 }
 
+/* Reads a single line from a file in /sys/class/power_supply/ */
 char *readfile(char *base, char *file) {
   char path[512];
   char *line = malloc(512);
   if (!line)
     return NULL;
-
   memset(line, 0, 512);
   snprintf(path, sizeof(path), "%s/%s", base, file);
-
   FILE *fp = fopen(path, "r");
   if (!fp) {
     free(line);
     return NULL;
   }
-
   if (!fgets(line, 511, fp)) {
     fclose(fp);
     free(line);
     return NULL;
   }
-
   fclose(fp);
 
-  // Remove newline
+  /* Remove trailing newline */
   size_t len = strlen(line);
   if (len > 0 && line[len - 1] == '\n')
     line[len - 1] = '\0';
-
   return line;
 }
 
-void activate_tlp() { system("sudo tlp start 2>/dev/null"); }
-
-void deactivate_tlp() { system("sudo tlp stop 2>/dev/null"); }
-
+/* Wrapper for libnotify alerts */
 void send_notification(const char *title, const char *body,
                        NotifyUrgency urgency) {
   NotifyNotification *notify = notify_notification_new(title, body, NULL);
@@ -69,6 +64,7 @@ void send_notification(const char *title, const char *body,
 }
 
 int main() {
+  /* Setup signal handling */
   struct sigaction sa;
   memset(&sa, 0, sizeof(sa));
   sa.sa_handler = stop_handler;
@@ -77,145 +73,93 @@ int main() {
 
   int cap = 0;
   int flag = 0;
-  int last_charging_state = -1; // -1: unknown, 0: discharging, 1: charging
-  int tlp_active = 0;
+  int last_charging_state = -1;
+  int tlp_notified = 0;
 
+  /* Lock file logic to prevent multiple instances */
   char file[256];
   snprintf(file, sizeof(file), "%s/.lowbattery_lock", getenv("HOME"));
-
   int pid_file = open(file, O_CREAT | O_RDWR, 0666);
-  if (pid_file < 0) {
-    perror("Error opening lock file");
+  if (pid_file < 0)
     return 1;
-  }
-
   if (flock(pid_file, LOCK_EX | LOCK_NB)) {
-    if (errno == EWOULDBLOCK) {
-      fprintf(stderr, "Another instance is already running\n");
-      close(pid_file);
-      return 1;
-    }
-  }
-
-  char path[64] = {0};
-  FILE *fp = fopen("/sys/class/power_supply/BAT0/capacity", "r");
-  if (fp) {
-    strcpy(path, "/sys/class/power_supply/BAT0");
-    fclose(fp);
-  } else {
-    fp = fopen("/sys/class/power_supply/BAT1/capacity", "r");
-    if (fp) {
-      strcpy(path, "/sys/class/power_supply/BAT1");
-      fclose(fp);
-    } else {
-      fprintf(stderr, "Battery not found\n");
-      close(pid_file);
-      return 1;
-    }
-  }
-
-  if (!notify_init("Battery Monitor")) {
-    fprintf(stderr, "Error initializing libnotify\n");
     close(pid_file);
     return 1;
   }
 
+  /* Detect battery path (BAT0 or BAT1) */
+  char path[64] = {0};
+  if (access("/sys/class/power_supply/BAT0/capacity", F_OK) == 0)
+    strcpy(path, "/sys/class/power_supply/BAT0");
+  else
+    strcpy(path, "/sys/class/power_supply/BAT1");
+
+  if (!notify_init("Battery Monitor"))
+    return 1;
+
   while (run) {
-    char *cp = readfile(path, "capacity");
-    if (!cp) {
+    char *cp_cap = readfile(path, "capacity");
+    char *cp_stat = readfile(path, "status");
+    if (!cp_cap || !cp_stat) {
       sleep(CHECK_INTERVAL);
       continue;
     }
 
-    sscanf(cp, "%d", &cap);
-    free(cp);
+    sscanf(cp_cap, "%d", &cap);
 
-    cp = readfile(path, "status");
-    if (!cp) {
-      sleep(CHECK_INTERVAL);
-      continue;
-    }
+    /* Check if power is connected (Charging, Full, or Not Charging due to TLP)
+     */
+    int plugged_in = (strncmp(cp_stat, "Charging", 8) == 0 ||
+                      strncmp(cp_stat, "Not charging", 12) == 0 ||
+                      strncmp(cp_stat, "Full", 4) == 0);
 
-    int is_charging = 0;
-
-    if (!strncmp(cp, "Discharging", 11)) {
-      is_charging = 0;
-
-      // Charger disconnected notification
-      if (last_charging_state == 1) {
-        send_notification("Charger Disconnected", "Battery discharging",
+    if (strncmp(cp_stat, "Discharging", 11) == 0) {
+      /* Case: Battery discharging */
+      if (last_charging_state == 1)
+        send_notification("Charger Disconnected", "Running on battery power",
                           NOTIFY_URGENCY_NORMAL);
-      }
 
-      // Low battery warning
       if (cap <= LOW_BATTERY_WARNING_THRESHOLD && !(flag & F_LOW)) {
         flag |= F_LOW;
-        send_notification("Battery Low", "Connect charger",
+        send_notification("Battery Low",
+                          "Critical level, please connect charger",
                           NOTIFY_URGENCY_CRITICAL);
       }
-
-      // Deactivate TLP if it was active
-      if (tlp_active) {
-        deactivate_tlp();
-        tlp_active = 0;
-      }
-
+      tlp_notified = 0;
+      last_charging_state = 0;
       flag &= ~F_CHG;
-      flag &= ~F_FULL;
-
-    } else if (!strncmp(cp, "Charging", 8) ||
-               !strncmp(cp, "Not charging", 12)) {
-      is_charging = 1;
-
-      // Charger connected notification
-      if (last_charging_state == 0 || last_charging_state == -1) {
-        send_notification("Charger Connected", "Battery charging",
+    } else {
+      /* Case: Power plugged in */
+      if (last_charging_state == 0 || last_charging_state == -1)
+        send_notification("Charger Connected", "External power source detected",
                           NOTIFY_URGENCY_NORMAL);
-      }
 
       if (flag & F_LOW)
         flag &= ~F_LOW;
 
-      if (cap < 100)
-        flag &= ~F_FULL;
-
-      flag |= F_CHG;
-
-      // Activate TLP if battery is above 80%
-      if (cap > TLP_ACTIVATION_THRESHOLD && !tlp_active) {
-        activate_tlp();
-        tlp_active = 1;
-        send_notification("TLP Activated", "Battery protection enabled (>80%)",
-                          NOTIFY_URGENCY_LOW);
-      }
-
-      // Deactivate TLP if battery drops below 80%
-      if (cap <= TLP_ACTIVATION_THRESHOLD && tlp_active) {
-        deactivate_tlp();
-        tlp_active = 0;
-      }
-
-      // Battery full
-      if (cap == 100 && !(flag & F_FULL)) {
-        flag |= F_FULL;
-        send_notification("Battery Full", "You can disconnect the charger",
+      /* TLP Info: Notifies when > 80% and plugged in */
+      if (cap > TLP_INFO_THRESHOLD && !tlp_notified) {
+        send_notification("TLP Active",
+                          "Battery > 80%. Charging managed by the system.",
                           NOTIFY_URGENCY_NORMAL);
+        tlp_notified = 1;
       }
+
+      if (cap <= TLP_INFO_THRESHOLD)
+        tlp_notified = 0;
+
+      last_charging_state = 1;
+      flag |= F_CHG;
     }
 
-    last_charging_state = is_charging;
-    free(cp);
-
+    free(cp_cap);
+    free(cp_stat);
     sleep(CHECK_INTERVAL);
   }
 
-  if (tlp_active) {
-    deactivate_tlp();
-  }
-
+  /* Cleanup before exit */
   notify_uninit();
   close(pid_file);
   unlink(file);
-
   return 0;
 }
