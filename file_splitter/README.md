@@ -1,74 +1,38 @@
 # File Splitter
 
-file_splitter is a command-line utility that allows you to split a file into multiple parts
-and reconstruct the original file from those parts.
+A command-line tool for splitting a file into parts and rejoining them later.
 
-This tool is useful for handling large files or performing segmented file transfers.
+## What it does
 
----
+Split mode divides a file into N roughly equal parts, named `<basename>.parteNNN` (`.parte000`, `.parte001`, ...), streamed through a fixed 1024-byte buffer. Join mode concatenates a list of parts, in the order given on the command line, into a new output file.
+
+It's plain C, built with `gcc`; no external dependencies. There's no checksum verification and no progress bar, just a print line per part processed.
+
+## Building
+
+```bash
+make main   # produces `file_splitter`
+```
 
 ## Usage
 
-### Split a file into parts
+Split a file into 3 parts:
 
-Splits a file into N parts.
-
-./file_splitter -s <file_path> <num_parts>
-
-Example:
+```bash
 ./file_splitter -s video.mp4 3
+```
 
-This will generate:
-video.mp4.part0
-video.mp4.part1
-video.mp4.part2
+This creates `video.mp4.parte000`, `video.mp4.parte001`, `video.mp4.parte002`.
 
----
+Join them back together:
 
-### Join file parts
+```bash
+./file_splitter -j video.mp4.parte000 video.mp4.parte001 video.mp4.parte002 video.mp4
+```
 
-Joins multiple file parts into a single output file.
-
-./file_splitter -j <part1> <part2> ... <output_name>
-
-Example:
-./file_splitter -j video.mp4.part0 video.mp4.part1 video.mp4.part2 video.mp4
-
----
-
-## Build Instructions
-
-This project uses a Makefile to compile the source code.
-
-To build the executable, run:
-
-make main
-
-After a successful build, the following executable will be generated:
-
-file_splitter
-
----
-
-## Requirements
-
-- A C++ compiler with C++17 support (e.g. g++)
-- make
-
----
-
-## Output
-
-- Generated file parts follow this naming convention:
-  <original_filename>.partN
-- The reconstructed file will have the name specified by the user.
-
----
+Part order on the command line matters; the join happens in the order you list them.
 
 ## Notes
 
-- The program supports both binary and text files.
-- When using the -j option, the order of the parts matters.
-- Make sure you have read/write permissions for the involved files.
-
-
+- Works on both text and binary files.
+- Make sure you have read/write permissions for all files involved.

@@ -1,432 +1,163 @@
-# C Projects Collection 🚀
+# C Projects Collection
 
-A curated collection of systems programming, graphics, simulation, and utility projects written in C. This repository serves as a portfolio showcasing various aspects of C programming, from low-level system calls to graphical applications and computational simulations.
+A collection of small C projects covering systems programming, graphics, simulations, networking, and a toy language interpreter. Most of these were written to learn or practice a specific API or algorithm, so scope and polish vary from project to project. Some are one-file experiments, others have their own README with build details.
 
-## 📑 Table of Contents
+## Contents
 
-- [Overview](#overview)
-- [Projects](#projects)
-  - [Graphics & Visualization](#graphics--visualization)
-  - [System Utilities](#system-utilities)
-  - [Simulations](#simulations)
-  - [Network & Communication](#network--communication)
-  - [Language Implementation](#language-implementation)
-- [Technologies Used](#technologies-used)
-- [Building Projects](#building-projects)
-- [Contributing](#contributing)
+- [Cryptography](#cryptography)
+- [Graphics](#graphics)
+- [Hardware & Input Testing](#hardware--input-testing)
+- [Simulations](#simulations)
+- [System Utilities](#system-utilities)
+- [Networking](#networking)
+- [Language Implementation](#language-implementation)
+- [Building](#building)
 - [License](#license)
 
-## 🎯 Overview
+---
 
-This repository contains a diverse range of C projects demonstrating:
+## Cryptography
 
-- **Systems Programming**: Low-level OS interactions, kernel syscalls
-- **Graphics Programming**: SDL, GTK3, and custom rendering
-- **Network Programming**: UDP/TCP protocols
-- **Algorithm Implementation**: Mathematical modeling, simulations
-- **Compiler Theory**: Lambda calculus interpreter
-- **Hardware Interfacing**: Keyboard, mouse, battery monitoring
+### AES Encryption Tool (`aes/`)
 
-Each project is self-contained with its own build system and documentation.
+A from-scratch implementation of AES (Rijndael), supporting AES-128, AES-192, and AES-256, with an interactive CLI for encrypting and decrypting messages. Implements SubBytes, ShiftRows, MixColumns, AddRoundKey (and their inverses), key schedule expansion, and PKCS#7 padding, following FIPS 197.
+
+It has no cipher mode implementation, so encryption is effectively ECB, and there's no IV, MAC, or constant-time guarantees. It's an educational implementation, not something to use for real data. See `aes/README.md` for the full API reference, build instructions, and test vectors.
+
+**Build**: `make` (targets: `all`, `clean`, `run`)
 
 ---
 
-## 📂 Projects
+## Graphics
 
-### Graphics & Visualization
+### Function Plotter (`function_plotter/`)
 
-#### 📊 Function Plotter
-**Description**: Mathematical function visualization tool with interactive plotting capabilities.
+Renders the graph of a mathematical expression, passed as a command-line argument, over a given domain. Uses SDL2 for the window, tinyexpr to parse and evaluate the expression, and SDL2_ttf to draw axis labels.
 
-**Features**:
-- Real-time function rendering using SDL2
-- Mathematical expression parsing via TinyExpr library
-- Support for arbitrary mathematical functions
-- Configurable domain and range
-- Interactive graph navigation
+**Build**: `make main`
+**Usage**: `./programa "sin(x)"`
 
-**Technologies**: SDL2, TinyExpr
+### Paint (`paint/`)
 
-**Use Case**: Visualizing mathematical functions, educational tool for calculus and algebra
+A small SDL2 drawing canvas (900x600). Freehand circular brush with adjustable radius (Ctrl+/Ctrl-, up to 40px), an 8-color palette, and undo via Ctrl+Z backed by a 100-entry surface stack. There's no save/load and no separate shape tools (line/rectangle), just the brush.
+
+**Build**: `make main`
 
 ---
 
-#### 🎨 Paint
-**Description**: Clone of the classic Microsoft Paint drawing application.
+## Hardware & Input Testing
 
-**Features**:
-- Brush and pencil tools
-- Color palette selection
-- Shape drawing primitives (line, rectangle, circle)
-- Canvas save/load functionality
-- Undo/redo support
+### Keyboard Input Visualizer (`keyboard_input/`)
 
-**Technologies**: SDL2 
+Draws a ThinkPad T480 keyboard layout (87 keys across 6 rows) in a raylib window and highlights each key as it's pressed, alongside a scrolling log of recent keypresses.
 
-**Use Case**: Simple raster graphics editor, educational graphics programming
+**Build**: `gcc keyboard_input.c -o keyboard_input1 -lraylib -lm -lpthread -ldl -lrt -lX11`
 
----
+### Mouse Tracker (`mouse_tracker/`)
 
-#### ⌨️ Keyboard Tester
-**Description**: Interactive keyboard testing application with visual feedback.
+Reads raw input events directly from a Linux evdev device file (e.g. `/dev/input/event11`), passed as a command-line argument, and prints each event (REL_X/REL_Y, buttons, etc.) along with a running, clamped x/y position. It talks to the kernel input layer directly, not X11 or Wayland, so it needs read access to the device file. The event numbers in the source comments are specific to the author's ThinkPad T480.
 
-**Features**:
-- Real-time key press detection
-- Visual keyboard layout (ThinkPad T480 specific)
-- Key response time measurement
-- Dead key detection
-- Customizable layouts
-
-**Technologies**: Raylib 
-
-**Use Case**: Hardware testing, keyboard diagnostics, debugging input issues
+**Build**: `make`
+**Usage**: `./mouse_tracker event11` (pass just the device name; the program prepends `/dev/input/` itself)
 
 ---
 
-#### 🖱️ Mouse Tracker
-**Description**: Mouse and touchpad testing utility with precision metrics.
+## Simulations
 
-**Features**:
-- Real-time cursor position tracking
-- Click detection and visualization
-- Movement speed analysis
-- Touchpad gesture recognition
-- Accuracy testing mode
+### Spring on Mass (`spring_on_mass/`)
 
-**Technologies**: X11/Wayland input APIs
+A horizontal spring-mass-damper simulation in raylib: `F = -kx - cv`, integrated with semi-implicit Euler each frame. Draws the floor, a zig-zag spring, and the moving mass.
 
-**Use Case**: Input device testing, touchpad calibration, gaming hardware validation
+**Build**: `gcc -o spring spring.c -lraylib -lGL -lm -lpthread -ldl -lrt -lX11`
 
----
+### Particle Collision (`collison/`)
 
-### System Utilities
+100 particles falling under gravity inside a raylib window, bouncing off the walls with damping and resolving collisions between each other with mass-weighted elastic impulses. Collision checks are brute-force all-pairs (O(n²)); there's no spatial partitioning.
 
-#### 📁 File Splitter
-**Description**: Command-line utility for splitting and joining large files.
+**Build**: `make`
 
-**Features**:
-- Split files into N equal parts
-- Rejoin split files into original
-- Checksum verification
-- Progress indication
-- Configurable chunk sizes
+### Leaf Venation (`venation_leaf/`)
 
-**Technologies**: Standard C libraries, POSIX I/O
+Procedural leaf vein generation using the space colonization algorithm from [Runions et al., "Modeling and Visualization of Leaf Venation Patterns"](https://algorithmicbotany.org/papers/venation.sig2005.pdf). Each Space keypress sprays a batch of random attractor points, grows the veins toward their nearest attractors, and removes attractors once a vein gets close enough to them. Built with raylib and raymath, vendoring a prebuilt raylib 5.5 binary.
 
-**Use Case**: Large file transfer, backup management, storage optimization
+**Build**: `cc -o nob nob.c && ./nob` (uses [nob.h](https://github.com/tsoding/nob.h), a self-rebuilding single-header build tool)
 
 ---
 
-#### ⏱️ Timer
-**Description**: Precision countdown timer using kernel-level syscalls.
+## System Utilities
 
-**Features**:
-- Microsecond-precision timing
-- Signal-based implementation using `setitimer()`
-- Custom signal handlers with `sigaction()`
-- Non-blocking operation
-- Multiple timer support
+### File Splitter (`file_splitter/`)
 
-**Technologies**: POSIX syscalls, signals
+Splits a file into N parts and rejoins them. Despite what its own README says, it's plain C (compiled with `gcc`, not a C++17 compiler) with no external dependencies. There's no checksum verification or progress indication, just chunked reads and writes through a fixed 1024-byte buffer.
 
-**Use Case**: Performance measurement, task scheduling, real-time applications
+**Build**: `make main`
+**Usage**: `./file_splitter -s video.mp4 3` to split, `./file_splitter -j video.mp4.parte000 video.mp4.parte001 video.mp4.parte002 video.mp4` to rejoin
 
----
+### Timer (`timer/`)
 
-#### 💻 Terminal Own
-**Description**: Lightweight terminal emulator based on suckless st.
+A single-shot countdown timer. Installs a `SIGALRM` handler with `sigaction()` and drives the countdown with `setitimer(ITIMER_REAL, ...)` at one-second intervals, blocking on `pause()` between ticks.
 
-**Features**:
-- Minimal footprint
-- VTE (Virtual Terminal Emulator) support
-- GTK3 integration
-- Customizable keybindings
-- Tab support
-- Configuration via header files
+**Build**: `make`
+**Usage**: `./timer <seconds>`
 
-**Technologies**: GTK3, VTE, X11/Wayland
+### Own Terminal (`own/`)
 
-**Use Case**: Lightweight terminal alternative, embedded systems, minimal desktop environments
+A minimal terminal emulator built on GTK3 and VTE (`vte_terminal_new`, spawning `$SHELL`). Configuration lives in a header file (`config/config.h`), a nod to suckless's philosophy, but the code itself isn't derived from st. Supports copy/paste (Ctrl+Shift+C/V) and zoom (Ctrl+/Ctrl-/Ctrl+0). No tabs; custom colors are defined in the config but the call that applies them is currently commented out in `main.c`.
 
----
+**Build**: `make` (requires `gtk+-3.0` and `vte-2.91` via pkg-config)
 
-#### 🔋 Battery Notifications
-**Description**: System tray daemon for battery status monitoring.
+### Battery Notifications (`battery_notifications/`)
 
-**Features**:
-- Real-time battery level monitoring
-- Configurable notification thresholds
-- Low battery warnings
-- Charging status detection
-- System tray integration
+A small daemon that polls `/sys/class/power_supply/BAT0` (or `BAT1`) every 5 seconds and sends desktop notifications via libnotify: a critical warning when discharging at or below 20%, and a status notification when charging above 80% (labeled "TLP Active," informational only; it doesn't call or manage TLP). Uses a lock file to prevent multiple instances and ships a systemd user service for autostart. `sudo` is only needed for `make install`, which copies the binary to `/usr/local/bin`; the daemon itself never runs commands as root. MIT licensed, based on [vedpatil611's lowbattery](https://github.com/vedpatil611).
 
-**Technologies**: libnotify
+**Build**: `sudo make clean install`, then `make service enable start`
 
-**Use Case**: Laptop power management, preventing data loss from unexpected shutdowns
+### Disk Benchmark (`benchmark_disk/`)
+
+Times sequential disk throughput by writing a 512MB file in 4MB blocks with `open()`/`write()`/`fsync()`, using `clock_gettime()` to measure elapsed time and report MB/s. `-w` times the write only; `-r` writes then times a sequential read. It's sequential-only, with a single fixed block size: no random I/O, IOPS, latency percentiles, or CSV/JSON export.
+
+**Build**: `make`
 
 ---
 
-#### 💾 Benchmark Disk
-**Description**: Storage device performance testing utility.
+## Networking
 
-**Features**:
-- Sequential read/write benchmarking
-- Random I/O performance testing
-- IOPS (I/O Operations Per Second) measurement
-- Latency analysis
-- Multiple block size testing
-- Results export to CSV/JSON
+### UDP Message (`udp_message/`)
 
-**Technologies**: POSIX I/O, direct I/O, `open()`, `read()`, `write()`
+A UDP messaging tool with three modes: listen (`-l <port>`), send (`-d <ip> -p <port>`), and a bidirectional "complete" mode (`-d <ip> -l <port>`, multiplexed with `select()`). It's unicast only; broadcast, multicast, and raw sockets are listed as future work in the project's own README, not implemented. MIT licensed. See `udp_message/README.md` for usage examples.
 
-**Use Case**: SSD/HDD performance validation, storage comparison, system diagnostics
+**Build**: `gcc -o udp udp.c -Wall`
 
 ---
 
-### Simulations
+## Language Implementation
 
-#### 🌊 Spring On Mass Simulation
-**Description**: Physics simulation of a spring-mass-damper system.
+### Lambda Calculus Language (`lamb_calculus_languaje/`)
 
-**Features**:
-- Real-time spring dynamics visualization
-- Friction/damping coefficient adjustment
-- Mass and spring constant configuration
-- Energy conservation analysis
-- Export simulation data
+A REPL for the untyped lambda calculus, with a hand-written lexer and recursive-descent parser for `\x.body` and application syntax. Beta-reduces in normal order (leftmost-outermost, reducing under lambdas), printing each step up to a cap of 10. Bound variables are alpha-renamed to unique global IDs to avoid capture. This isn't true De Bruijn indexing, since the IDs don't encode binder depth or position.
 
-**Mathematical Model**:
-```
-F = -kx - cv
-m(d²x/dt²) = -kx - c(dx/dt)
-```
+The `nob.c`/`nob.h` files in this directory are a stray copy left over from `venation_leaf/` and don't build anything here (they reference a `main.c` and a raylib directory that don't exist in this project).
 
-**Technologies**: SDL2
-
-**Use Case**: Physics education, mechanical system modeling, algorithm testing
+**Build**: `cc -o lamb lamb.c`
 
 ---
 
-#### ⚛️ Particles Collision
-**Description**: N-body particle collision simulation with physics engine.
+## Building
 
-**Features**:
-- Elastic collision simulation
-- Mass-based momentum transfer
-- Real-time collision detection (quadtree/spatial hashing)
-- Configurable particle properties
-- Gravity and electromagnetic forces
+Each project builds independently with its own `makefile`/`Makefile`; there's no top-level build script. Most expose a `main` or `all` target (check the individual file; a couple use `make main` where others default to plain `make`). Two projects (`venation_leaf/`, and nominally `lamb_calculus_languaje/`, though its copy is broken) use tsoding's [nob.h](https://github.com/tsoding/nob.h) pattern instead: `cc -o nob nob.c && ./nob`.
 
-**Technologies**: SDL2, computational geometry
+Dependencies vary by project:
 
-**Use Case**: Physics simulation, game engine development, algorithm visualization
-
----
-
-#### 🍃 Leaf Venation
-**Description**: Procedural leaf vein pattern generation using space colonization algorithm.
-
-**Implementation Based On**:
-> [Modeling and visualization of leaf venation patterns (Runions et al.)](https://algorithmicbotany.org/papers/venation.sig2005.pdf)
-
-**Features**:
-- Biologically-inspired pattern generation
-- Space colonization algorithm implementation
-- Adjustable attraction/kill distances
-- Multiple leaf shape templates
-- Export to SVG/PNG
-
-**Technologies**: SDL2, computational biology algorithms
-
-**Use Case**: Procedural generation, botanical modeling, computer graphics research
+| Library | Used by |
+|---|---|
+| SDL2 / SDL2_ttf | `function_plotter`, `paint` |
+| raylib | `collison`, `keyboard_input`, `spring_on_mass`, `venation_leaf` (vendored) |
+| GTK3 + vte-2.91 | `own` |
+| libnotify | `battery_notifications` |
+| POSIX only | `aes`, `benchmark_disk`, `file_splitter`, `lamb_calculus_languaje`, `mouse_tracker`, `timer`, `udp_message` |
 
 ---
 
-### Network & Communication
+## License
 
-#### 📡 UDP Message Sender
-**Description**: Lightweight UDP packet transmission utility.
-
-**Features**:
-- Send/receive UDP datagrams
-- Broadcast and multicast support
-- Packet fragmentation handling
-- Network statistics
-- Raw socket mode
-
-**Technologies**: POSIX sockets, `sendto()`, `recvfrom()`
-
-**Use Case**: Network testing, IoT communication, game networking, service discovery
-
----
-
-### Language Implementation
-
-#### 🔬 Lamb Language
-**Description**: Minimal functional programming language based on pure lambda calculus.
-
-**Features**:
-- Pure lambda calculus interpreter
-- Church encoding for data structures
-- Lexer and parser implementation
-- REPL (Read-Eval-Print Loop)
-- Reduction strategies (normal order, applicative order)
-- De Bruijn index notation support
-
-**Grammar**:
-```
-expr := var | λvar.expr | (expr expr)
-```
-
-**Example Programs**:
-```lambda
-# Identity function
-λx.x
-
-# Church numerals
-ZERO  = λf.λx.x
-ONE   = λf.λx.f x
-TWO   = λf.λx.f (f x)
-
-# Boolean operations
-TRUE  = λx.λy.x
-FALSE = λx.λy.y
-AND   = λp.λq.p q p
-```
-
-**Technologies**: Recursive descent parsing, AST evaluation
-
-**Use Case**: Programming language theory, compiler education, functional programming
-
----
-
-## 🛠️ Technologies Used
-
-### Graphics Libraries
-- **SDL2**: Cross-platform graphics and input
-- **GTK3**: GUI toolkit for Linux applications
-- **VTE**: Virtual Terminal Emulator library
-
-### System Programming
-- **POSIX API**: File I/O, processes, signals
-- **Linux syscalls**: Low-level kernel interaction
-- **D-Bus**: Inter-process communication
-- **UPower**: Power management interface
-
-### Networking
-- **Berkeley sockets**: TCP/UDP networking
-- **Raw sockets**: Low-level packet manipulation
-
-### Mathematical Libraries
-- **TinyExpr**: Mathematical expression parsing and evaluation
-
----
-
-## 📊 Project Statistics
-
-| Category | Count | Primary Technologies |
-|----------|-------|---------------------|
-| Graphics & Visualization | 4 | SDL2, GTK3 |
-| System Utilities | 4 | POSIX, syscalls |
-| Simulations | 3 | SDL2, numerical methods |
-| Network | 1 | BSD sockets |
-| Language Implementation | 1 | Parser, interpreter |
-| **Total** | **13** | **C99/C11** |
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how you can help:
-
-### Adding New Projects
-1. Create a new directory with descriptive name
-2. Include a project-specific README
-3. Add Makefile with standard targets (all, clean, run)
-4. Update this main README with project description
-
-### Improving Existing Projects
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request with detailed description
-
-### Code Standards
-- Follow K&R or Linux kernel coding style
-- Comment complex algorithms
-- Use meaningful variable names
-- Include error handling
-- Write portable code (avoid compiler-specific extensions)
-
----
-
-## 📝 License
-
-Each project may have its own license. Check individual project directories for specific licensing information.
-
-Unless otherwise specified, projects are available under the MIT License.
-
----
-
-## 🎓 Learning Objectives
-
-This repository demonstrates proficiency in:
-
-- ✅ Low-level memory management
-- ✅ Systems programming and POSIX APIs
-- ✅ Graphics programming and rendering
-- ✅ Network protocol implementation
-- ✅ Algorithm design and optimization
-- ✅ Physics and mathematical modeling
-- ✅ Compiler/interpreter design
-- ✅ Cross-platform development
-- ✅ Hardware interfacing
-- ✅ Real-time systems
-
----
-
-## 📚 Resources
-
-### Books
-- *The C Programming Language* by Kernighan & Ritchie
-- *Advanced Programming in the UNIX Environment* by Stevens & Rago
-- *Computer Graphics: Principles and Practice* by Foley et al.
-
-### Documentation
-- [SDL2 Wiki](https://wiki.libsdl.org/)
-- [GTK Documentation](https://docs.gtk.org/)
-- [POSIX Specification](https://pubs.opengroup.org/onlinepubs/9699919799/)
-
-### Papers
-- [Space Colonization Algorithm - Runions et al.](https://algorithmicbotany.org/papers/venation.sig2005.pdf)
-
----
-
-## 🔗 Related Projects
-
-- [suckless.org](https://suckless.org/) - Philosophy of simple, minimal software
-- [TinyExpr](https://github.com/codeplea/tinyexpr) - Math expression parser
-- [SDL2](https://www.libsdl.org/) - Simple DirectMedia Layer
-
----
-
-## 👤 Author
-
-Maintained as a personal portfolio of C programming projects.
-
-**Focus Areas**: Systems programming, graphics, simulations, algorithms
-
----
-
-## ⭐ Showcase Projects
-
-Highlighted projects demonstrating advanced concepts:
-
-1. **Lamb Language** - Complete interpreter implementation
-2. **Leaf Venation** - Research paper algorithm implementation  
-3. **Particles Collision** - Real-time physics engine
-4. **Terminal Own** - Complex systems integration (GTK + VTE)
-
----
-
-**Last Updated**: January 2026
+There's no repository-wide license. `battery_notifications` and `udp_message` ship their own MIT `LICENSE` files (`aes/README.md` references one, but no `LICENSE` file is actually present in that directory); everything else currently has no license attached.
