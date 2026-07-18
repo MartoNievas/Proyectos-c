@@ -155,11 +155,11 @@ Expr *replace(Var_Name arg, Expr *body, Expr *val) {
     if (new_body == body->as.fun.body) {
       return body;
     }
-    Var_Name saved_arg = {.name = strdup(body->as.fun.arg.name),
-                          .id = body->as.fun.arg.id};
+    Var_Name saved_arg = body->as.fun.arg;
+    Expr *result = fun_bound(saved_arg, new_body);
     free((void *)body->as.fun.arg.name);
     free(body);
-    return fun_bound(saved_arg, new_body);
+    return result;
   }
   case EXPR_APP: {
     Expr *new_lhs = replace(arg, body->as.app.lhs, val);
@@ -185,11 +185,14 @@ Expr *eval1(Expr *expr) {
   case EXPR_FUN: {
     Expr *body = eval1(expr->as.fun.body);
     if (body != expr->as.fun.body) {
-      Var_Name saved_arg = {.name = strdup(expr->as.fun.arg.name),
-                            .id = expr->as.fun.arg.id};
+      /* fun_bound() strdup()s the name itself, so pass the original
+         through and free it after, instead of pre-copying and leaking
+         that copy. */
+      Var_Name saved_arg = expr->as.fun.arg;
+      Expr *result = fun_bound(saved_arg, body);
       free((void *)expr->as.fun.arg.name);
       free(expr);
-      return fun_bound(saved_arg, body);
+      return result;
     }
     return expr;
   }
@@ -203,7 +206,15 @@ Expr *eval1(Expr *expr) {
 
     if (lhs->kind == EXPR_FUN) {
       Expr *result = apply(lhs->as.fun, expr->as.app.rhs);
-      free_expr(expr);
+      /* replace() already consumed lhs->as.fun.body (freeing substituted
+         nodes, reusing the rest inside `result`); free_expr(expr) would
+         free that same memory again through expr->as.app.lhs. Free just
+         the leftover wrapper nodes and the original argument, which
+         replace() only ever clones from and never frees itself. */
+      free_expr(expr->as.app.rhs);
+      free((void *)lhs->as.fun.arg.name);
+      free(lhs);
+      free(expr);
       return result;
     }
 
@@ -409,18 +420,30 @@ Expr *parse_fun(Lexer *l) {
   if (!lexer_expect(l, TOKEN_NAME))
     return NULL;
 
-  const char *arg = l->name.items;
-  if (!lexer_expect(l, TOKEN_DOT))
+  /* l->name is the lexer's shared scratch buffer: parsing the body below
+     lexes more tokens (possibly more names) and overwrites it in place,
+     so the argument name has to be copied out now rather than aliased. */
+  char *arg = strdup(l->name.items);
+
+  if (!lexer_expect(l, TOKEN_DOT)) {
+    free(arg);
     return NULL;
+  }
 
   Expr *body = parse_expr(l);
-  if (!body)
+  if (!body) {
+    free(arg);
     return NULL;
+  }
 
-  if (!lexer_expect(l, TOKEN_CPAREN))
+  if (!lexer_expect(l, TOKEN_CPAREN)) {
+    free(arg);
     return NULL;
+  }
 
-  return fun(arg, body);
+  Expr *result = fun(arg, body); /* fun() strdup()s arg internally */
+  free(arg);
+  return result;
 }
 
 Expr *parse_expr(Lexer *l) {
@@ -491,6 +514,9 @@ int main() {
     };
 
     Expr *expr = parse_expr(&l);
+    da_free(l.name); /* the lexer's scratch buffer for NAME tokens; every
+                        name it held has already been strdup()'d into the
+                        parsed tree (or nowhere, on a parse error) */
 
     if (!expr)
       continue;
@@ -498,12 +524,13 @@ int main() {
 
     trace_expr(expr, &sb);
 
+    /* eval1() consumes its argument: whenever it returns a pointer
+       different from its input, it has already freed the input (see
+       every branch above). So `expr` must never be freed here once
+       expr1 != expr; only the final live pointer needs freeing. */
     Expr *expr1 = eval1(expr);
     for (size_t i = 1; i < 10 && expr1 != expr; i++) {
-      /*Free expr*/
-      Expr *prev = expr;
       expr = expr1;
-      free_expr(prev);
       trace_expr(expr, &sb);
       expr1 = eval1(expr);
     }
@@ -512,7 +539,7 @@ int main() {
       printf("...\n");
     }
 
-    free_expr(expr);
+    free_expr(expr1);
   }
 
   free(sb.items);
